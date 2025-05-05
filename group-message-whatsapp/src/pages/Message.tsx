@@ -2,6 +2,8 @@ import React, { useRef, useState, useEffect } from 'react';
 import { UploadCloud, XCircle, Send } from 'lucide-react';
 import { alert } from '../components/Alert';
 import Papa from 'papaparse';
+import { useNotification } from '../context/NotificationContext';
+import API_URL from '../Config';
 
 function Message() {
   const [dragActive, setDragActive] = useState(false);
@@ -17,6 +19,8 @@ function Message() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [sending, setSending] = useState(false);
+  const notification = useNotification();
+  const bloqueado = notification.sending || notification.finished;
 
   const validateFile = (file: File) => {
     const isCSV = file.type === 'text/csv' || file.name.endsWith('.csv');
@@ -158,35 +162,41 @@ function Message() {
       return;
     }
     setSending(true);
+    notification.start(csvRows.length);
     try {
-      const messages = csvRows.map(row => {
+      for (let i = 0; i < csvRows.length; i++) {
+        const row = csvRows[i];
         let personalized = message;
         csvFields.forEach(f => {
           const regex = new RegExp(`@${f}`, 'g');
           personalized = personalized.replace(regex, row[f] || '');
         });
-        return { telefono: row['telefono'], mensaje: personalized };
-      });
-      const res = await fetch('http://localhost:3005/api/send-messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages, waitTime: waitTime * 1000 })
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert.success('¡Mensajes enviados correctamente!');
-      } else {
-        alert.error(data.error || 'Error al enviar mensajes');
+        notification.update(row['telefono'] || '', i + 1);
+        const res = await fetch(`${API_URL}/api/send-messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: [{ telefono: row['telefono'], mensaje: personalized }], waitTime: waitTime * 1000 })
+        });
+        const data = await res.json();
+        if (data.success) {
+          notification.addResult(row['telefono'] || '', 'enviado');
+        } else {
+          notification.addResult(row['telefono'] || '', 'error');
+        }
+        await new Promise(res => setTimeout(res, waitTime * 1000));
       }
+      // alert.success('¡Mensajes enviados correctamente!');
     } catch {
       alert.error('Error de red al enviar mensajes');
     } finally {
       setSending(false);
+      notification.finish();
     }
   };
 
   return (
-    <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+    <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md relative">
+      {bloqueado && <div className="absolute inset-0 bg-white bg-opacity-60 z-20 flex items-center justify-center cursor-not-allowed select-none"><span className="text-blue-700 text-lg font-semibold animate-pulse">Enviando mensajes...</span></div>}
       <h2 className="text-2xl font-bold mb-4 text-blue-700">Enviar mensaje</h2>
       <label className="block mb-2 font-medium text-gray-700">Mensaje</label>
       <div className="relative">
@@ -264,7 +274,7 @@ function Message() {
           <button
             className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-2xl shadow-lg hover:from-blue-700 hover:to-blue-500 transition-all duration-200 font-semibold text-lg focus:outline-none focus:ring-4 focus:ring-blue-200 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
             onClick={handleSendMessages}
-            disabled={sending}
+            disabled={sending || bloqueado}
             style={{ minWidth: 220 }}
           >
             {sending ? (

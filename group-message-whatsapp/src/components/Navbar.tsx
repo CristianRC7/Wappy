@@ -10,7 +10,7 @@ const navItems = [
 export default function Navbar() {
   const location = useLocation();
   return (
-    <nav className="bg-white shadow-lg px-6 py-3 flex items-center justify-between">
+    <nav className="bg-white shadow-lg px-6 py-3 flex items-center justify-between sticky top-0 z-50 backdrop-blur bg-opacity-90">
       <div className="text-xl font-bold text-blue-600 flex items-center gap-2">
         <QrCode size={28} className="text-blue-500" /> WhatsApp
       </div>
