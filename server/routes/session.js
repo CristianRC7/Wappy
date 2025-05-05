@@ -71,4 +71,5 @@ function handleSocketConnection(socket) {
 
 module.exports = {
   handleSocketConnection,
+  getSock: () => sock,
 }; 

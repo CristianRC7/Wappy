@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { UploadCloud, XCircle } from 'lucide-react';
+import { UploadCloud, XCircle, Send } from 'lucide-react';
 import { alert } from '../components/Alert';
 import Papa from 'papaparse';
 
@@ -16,6 +16,7 @@ function Message() {
   const [preview, setPreview] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [sending, setSending] = useState(false);
 
   const validateFile = (file: File) => {
     const isCSV = file.type === 'text/csv' || file.name.endsWith('.csv');
@@ -147,6 +148,43 @@ function Message() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const handleSendMessages = async () => {
+    if (!message || csvRows.length === 0) {
+      alert.error('Debes cargar un archivo CSV válido y escribir un mensaje.');
+      return;
+    }
+    if (waitTime < 25) {
+      alert.error('El tiempo de espera entre mensajes debe ser al menos 25 segundos.');
+      return;
+    }
+    setSending(true);
+    try {
+      const messages = csvRows.map(row => {
+        let personalized = message;
+        csvFields.forEach(f => {
+          const regex = new RegExp(`@${f}`, 'g');
+          personalized = personalized.replace(regex, row[f] || '');
+        });
+        return { telefono: row['telefono'], mensaje: personalized };
+      });
+      const res = await fetch('http://localhost:3005/api/send-messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages, waitTime: waitTime * 1000 })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert.success('¡Mensajes enviados correctamente!');
+      } else {
+        alert.error(data.error || 'Error al enviar mensajes');
+      }
+    } catch {
+      alert.error('Error de red al enviar mensajes');
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-4 text-blue-700">Enviar mensaje</h2>
@@ -180,7 +218,7 @@ function Message() {
           <span className="text-gray-800 whitespace-pre-line">{preview}</span>
         </div>
       )}
-      <label className="block mb-2 font-medium text-gray-700">Tiempo de espera entre mensajes (ms)</label>
+      <label className="block mb-2 font-medium text-gray-700">Tiempo de espera entre mensajes (segundos)</label>
       <input
         type="number"
         min={25}
@@ -219,6 +257,23 @@ function Message() {
           {csvFields.map((field) => (
             <span key={field} className="inline-block bg-blue-100 text-blue-700 rounded px-2 py-1 text-sm font-mono mr-2 mt-2">@{field}</span>
           ))}
+        </div>
+      )}
+      {csvRows.length > 0 && message && (
+        <div className="flex justify-center mt-8">
+          <button
+            className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-2xl shadow-lg hover:from-blue-700 hover:to-blue-500 transition-all duration-200 font-semibold text-lg focus:outline-none focus:ring-4 focus:ring-blue-200 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+            onClick={handleSendMessages}
+            disabled={sending}
+            style={{ minWidth: 220 }}
+          >
+            {sending ? (
+              <span className="w-6 h-6 border-4 border-white border-t-blue-300 rounded-full animate-spin inline-block"></span>
+            ) : (
+              <Send size={24} />
+            )}
+            {sending ? 'Enviando...' : 'Enviar mensajes'}
+          </button>
         </div>
       )}
     </div>
