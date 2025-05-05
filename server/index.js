@@ -5,6 +5,7 @@ const cors = require('cors');
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const qrcode = require('qrcode');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -19,12 +20,21 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = 3005;
+const AUTH_DIR = path.join(__dirname, 'auth_info');
 
 let sock = null;
 let sessionActive = false;
 
+function clearAuthInfo() {
+  if (fs.existsSync(AUTH_DIR)) {
+    fs.readdirSync(AUTH_DIR).forEach(file => {
+      fs.unlinkSync(path.join(AUTH_DIR, file));
+    });
+  }
+}
+
 async function startSock(socket) {
-  const { state, saveCreds } = await useMultiFileAuthState(path.join(__dirname, 'auth_info'));
+  const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
   sock = makeWASocket({
     auth: state,
     printQRInTerminal: false,
@@ -63,6 +73,7 @@ io.on('connection', (socket) => {
     if (sock) {
       await sock.logout();
       sessionActive = false;
+      clearAuthInfo();
       socket.emit('logout');
     }
   });
