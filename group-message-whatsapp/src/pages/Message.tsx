@@ -1,14 +1,13 @@
-// @ts-nocheck
 import React, { useRef, useState, useEffect } from 'react';
 import { UploadCloud, XCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import { alert } from '../components/Alert';
 import Papa from 'papaparse';
 
 function Message() {
   const [dragActive, setDragActive] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [csvFields, setCsvFields] = useState<string[]>([]);
-  const [csvRows, setCsvRows] = useState<any[]>([]);
+  const [csvRows, setCsvRows] = useState<Record<string, string | undefined>[]>([]);
   const [message, setMessage] = useState('');
   const [waitTime, setWaitTime] = useState(25);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -21,7 +20,7 @@ function Message() {
   const validateFile = (file: File) => {
     const isCSV = file.type === 'text/csv' || file.name.endsWith('.csv');
     if (!isCSV) {
-      toast.error('Solo se permite un archivo CSV (UTF-8, delimitado por comas)');
+      alert.error('Solo se permite un archivo CSV (UTF-8, delimitado por comas)');
       return false;
     }
     return true;
@@ -36,9 +35,9 @@ function Message() {
         if (results.meta.fields && results.meta.fields.map(f => f.toLowerCase()).includes('telefono')) {
           setFileName(file.name);
           setCsvFields(results.meta.fields);
-          setCsvRows(results.data);
+          setCsvRows(results.data as Record<string, string | undefined>[]);
         } else {
-          toast.error('El archivo CSV debe contener una columna llamada "telefono"');
+          alert.error('El archivo CSV debe contener una columna llamada "telefono"');
           setFileName(null);
           setCsvFields([]);
           setCsvRows([]);
@@ -46,7 +45,7 @@ function Message() {
         }
       },
       error: () => {
-        toast.error('Error al leer el archivo CSV');
+        alert.error('Error al leer el archivo CSV');
         setFileName(null);
         setCsvFields([]);
         setCsvRows([]);
@@ -160,7 +159,6 @@ function Message() {
           value={message}
           onChange={handleTextareaChange}
           onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-          onClick={handleTextareaChange}
         />
         {showSuggestions && suggestions.length > 0 && (
           <div className="absolute z-10 left-0 bg-white border border-blue-200 rounded shadow w-60 max-h-40 overflow-auto mt-1">
