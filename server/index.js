@@ -2,10 +2,8 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
-const qrcode = require('qrcode');
 const path = require('path');
-const fs = require('fs');
+const sessionRoutes = require('./routes/session');
 
 const app = express();
 const server = http.createServer(app);
@@ -20,63 +18,9 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = 3005;
-const AUTH_DIR = path.join(__dirname, 'auth_info');
-
-let sock = null;
-let sessionActive = false;
-
-function clearAuthInfo() {
-  if (fs.existsSync(AUTH_DIR)) {
-    fs.readdirSync(AUTH_DIR).forEach(file => {
-      fs.unlinkSync(path.join(AUTH_DIR, file));
-    });
-  }
-}
-
-async function startSock(socket) {
-  const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
-  sock = makeWASocket({
-    auth: state,
-    printQRInTerminal: false,
-  });
-
-  sock.ev.on('connection.update', async (update) => {
-    const { connection, qr } = update;
-    if (qr) {
-      // Generar QR como imagen base64
-      const qrImage = await qrcode.toDataURL(qr);
-      socket.emit('qr', qrImage);
-      sessionActive = false;
-    }
-    if (connection === 'open') {
-      sessionActive = true;
-      socket.emit('authenticated');
-    }
-    if (connection === 'close') {
-      sessionActive = false;
-      socket.emit('logout');
-      setTimeout(() => startSock(socket), 1000); // Reiniciar conexión
-    }
-  });
-
-  sock.ev.on('creds.update', saveCreds);
-}
 
 io.on('connection', (socket) => {
-  if (!sessionActive) {
-    startSock(socket);
-  } else {
-    socket.emit('authenticated');
-  }
-
-  socket.on('logout', async () => {
-    if (sock) {
-      await sock.logout();
-      sessionActive = false;
-      clearAuthInfo();
-      socket.emit('logout');
-    }
-  });
+  sessionRoutes.handleSocketConnection(socket);
 });
 
 app.get('/', (req, res) => {

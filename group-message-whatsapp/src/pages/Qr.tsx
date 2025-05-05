@@ -43,7 +43,12 @@ function Qr() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
-      {loading && <p className="mb-4">Cargando...</p>}
+      {loading && (
+        <div className="flex flex-col items-center mb-4">
+          <div className="w-12 h-12 mb-2 border-4 border-blue-300 border-t-blue-600 rounded-full animate-spin"></div>
+          <p className="text-blue-700 font-semibold text-lg">Cargando...</p>
+        </div>
+      )}
       {!isAuthenticated && qr && (
         <>
           <img src={qr} alt="QR para iniciar sesión" className="w-64 h-64 mb-4 border-4 border-blue-200 rounded-lg shadow-lg" />
