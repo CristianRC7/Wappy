@@ -5,6 +5,7 @@ const cors = require('cors');
 const path = require('path');
 const sessionRoutes = require('./routes/session');
 const messageRoutes = require('./routes/message');
+const groupRoutes = require('./routes/group');
 
 const app = express();
 const server = http.createServer(app);
@@ -18,6 +19,7 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 app.use('/api', messageRoutes);
+app.use('/api', groupRoutes);
 
 const PORT = 3005;
 

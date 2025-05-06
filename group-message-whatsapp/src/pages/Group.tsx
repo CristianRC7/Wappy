@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { UploadCloud, Users, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import Papa from 'papaparse';
+import API_URL from '../Config';
 
 function Group() {
   const [dragActive, setDragActive] = useState(false);
@@ -17,6 +18,7 @@ function Group() {
   const [addAdmin, setAddAdmin] = useState(false);
   const [adminNumber, setAdminNumber] = useState('');
   const [waitTime, setWaitTime] = useState(25);
+  const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validateFile = (file: File) => {
@@ -106,6 +108,39 @@ function Group() {
     if (!e.target.checked) setGroupDesc('');
   };
 
+  const handleCreateGroups = async () => {
+    if (!groupTitle || csvFields.length === 0 || csvRows.length === 0) {
+      toast.error('Debes subir un CSV válido y definir el nombre del grupo.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/create-groups`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          groupTitle,
+          groupDesc,
+          descEnabled,
+          addAdmin,
+          adminNumber,
+          waitTime,
+          csvFields,
+          csvRows,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Se crearon ${data.groups.length} grupos correctamente.`);
+      } else {
+        toast.error(data.error || 'Error desconocido al crear los grupos.');
+      }
+    } catch {
+      toast.error('Error de red o del servidor al crear los grupos.');
+    }
+    setLoading(false);
+  };
+
   React.useEffect(() => {
     if (csvRows.length > 0 && csvFields.length > 0 && groupTitle) {
       const randomRow = csvRows[Math.floor(Math.random() * csvRows.length)];
@@ -152,12 +187,13 @@ function Group() {
           className="hidden"
           accept=".csv,text/csv"
           onChange={handleInputChange}
+          disabled={loading}
         />
       </div>
       {fileName && (
         <div className="flex items-center gap-2 mt-3 bg-blue-50 border border-blue-200 rounded px-3 py-2">
           <span className="text-blue-700 font-medium truncate max-w-xs">{fileName}</span>
-          <button onClick={handleRemoveFile} className="ml-2 text-red-500 hover:text-red-700 cursor-pointer">
+          <button onClick={handleRemoveFile} className="ml-2 text-red-500 hover:text-red-700 cursor-pointer" disabled={loading}>
             <XCircle size={20} />
           </button>
         </div>
@@ -181,6 +217,7 @@ function Group() {
             onBlur={() => setFocus(null)}
             className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
             placeholder="Ejemplo: Grupo de @nombre - @ciudad"
+            disabled={loading}
           />
         </div>
       )}
@@ -198,6 +235,7 @@ function Group() {
               checked={descEnabled}
               onChange={handleDescCheck}
               className="accent-blue-600"
+              disabled={loading}
             />
             Descripción:
           </label>
@@ -211,6 +249,7 @@ function Group() {
                 className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
                 placeholder="Ejemplo: Bienvenidos a @nombre, grupo de @ciudad"
                 rows={3}
+                disabled={loading}
               />
               {descPreview && focus === 'desc' && (
                 <div className="mb-4 mt-2 p-3 bg-gray-50 border border-gray-200 rounded">
@@ -230,6 +269,7 @@ function Group() {
               checked={addAdmin}
               onChange={e => setAddAdmin(e.target.checked)}
               className="accent-blue-600"
+              disabled={loading}
             />
             Agregar número como administrador de todos los grupos
           </label>
@@ -245,6 +285,7 @@ function Group() {
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
               placeholder="Ejemplo: 59175057788"
               maxLength={15}
+              disabled={loading}
             />
           )}
         </div>
@@ -259,15 +300,30 @@ function Group() {
               value={waitTime}
               onChange={e => setWaitTime(Number(e.target.value))}
               className="w-full mb-4 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              disabled={loading}
             />
           </div>
           <div className="flex justify-center mt-4">
             <button
               className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-2xl shadow-lg hover:from-blue-700 hover:to-blue-500 transition-all duration-200 font-semibold text-lg focus:outline-none focus:ring-4 focus:ring-blue-200 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
               type="button"
+              onClick={handleCreateGroups}
+              disabled={loading}
             >
-              <Users size={24} />
-              Crear Grupos
+              {loading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                  </svg>
+                  Creando Grupos...
+                </>
+              ) : (
+                <>
+                  <Users size={24} />
+                  Crear Grupos
+                </>
+              )}
             </button>
           </div>
         </>
