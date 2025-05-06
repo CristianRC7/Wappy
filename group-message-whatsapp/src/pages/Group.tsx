@@ -19,6 +19,7 @@ function Group() {
   const [addAdmin, setAddAdmin] = useState(false);
   const [adminNumber, setAdminNumber] = useState('');
   const [waitTime, setWaitTime] = useState(25);
+  const [columnTemplate, setColumnTemplate] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const notification = useNotification();
 
@@ -115,7 +116,12 @@ function Group() {
       return;
     }
     notification.start(csvRows.length, 'grupo');
-    const createdGroups: { grupo: string; link: string }[] = [];
+    const createdGroups: any[] = [];
+    // Procesar columnas de la plantilla
+    const columns = columnTemplate
+      .split(',')
+      .map(c => c.trim())
+      .filter(c => c.startsWith('@'));
     try {
       for (let i = 0; i < csvRows.length; i++) {
         const row = csvRows[i];
@@ -157,7 +163,14 @@ function Group() {
           if (data.success && Array.isArray(data.groups) && data.groups.length > 0) {
             const inviteCode = data.groups[0].inviteCode;
             const link = inviteCode ? `https://chat.whatsapp.com/${inviteCode}` : '';
-            createdGroups.push({ grupo: title, link });
+            // Construir objeto para el Excel según columnas elegidas
+            const excelRow: any = {};
+            columns.forEach(col => {
+              const key = col.replace('@', '');
+              excelRow[key] = row[key] || '';
+            });
+            excelRow['enlace'] = link;
+            createdGroups.push(excelRow);
             notification.addResult({ grupo: title, status: 'enviado' });
           } else {
             notification.addResult({ grupo: title, status: 'error' });
@@ -169,7 +182,6 @@ function Group() {
         await new Promise(res => setTimeout(res, Math.max(Number(waitTime) || 25, 25) * 1000));
       }
       notification.finish();
-      // Guardar los grupos creados en el context para el modal
       notification.setCreatedGroups(createdGroups);
     } catch {
       notification.finish();
@@ -329,6 +341,20 @@ function Group() {
               disabled={notification.loading}
             />
           )}
+        </div>
+      )}
+      {csvFields.length > 0 && (
+        <div className="mt-8 mb-4">
+          <label className="block mb-2 font-medium text-gray-700">Columnas del Excel (usa etiquetas, separadas por coma):</label>
+          <input
+            type="text"
+            value={columnTemplate}
+            onChange={e => setColumnTemplate(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="Ejemplo: @nombre, @ciudad, @telefono"
+            disabled={notification.loading}
+          />
+          <span className="text-xs text-gray-500">Solo se incluirán las columnas aquí indicadas y el enlace de invitación.</span>
         </div>
       )}
       {csvFields.length > 0 && (

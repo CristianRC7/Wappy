@@ -10,7 +10,11 @@ const Notification: React.FC = () => {
   const errorCount = results.filter(r => r.status === 'error').length;
 
   const handleDownloadExcel = () => {
+    if (!createdGroups.length) return;
+    const headers = Object.keys(createdGroups[0]);
     const ws = XLSX.utils.json_to_sheet(createdGroups);
+    // Asegurar encabezados personalizados
+    XLSX.utils.sheet_add_aoa(ws, [headers], { origin: 'A1' });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Grupos');
     XLSX.writeFile(wb, 'grupos_creados.xlsx');
