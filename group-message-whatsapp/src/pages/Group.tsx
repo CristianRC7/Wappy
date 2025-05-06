@@ -3,6 +3,7 @@ import { UploadCloud, Users, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import Papa from 'papaparse';
 import API_URL from '../Config';
+import { useNotification } from '../context/NotificationContext';
 
 function Group() {
   const [dragActive, setDragActive] = useState(false);
@@ -18,8 +19,8 @@ function Group() {
   const [addAdmin, setAddAdmin] = useState(false);
   const [adminNumber, setAdminNumber] = useState('');
   const [waitTime, setWaitTime] = useState(25);
-  const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const notification = useNotification();
 
   const validateFile = (file: File) => {
     const isCSV = file.type === 'text/csv' || file.name.endsWith('.csv');
@@ -113,32 +114,61 @@ function Group() {
       toast.error('Debes subir un CSV válido y definir el nombre del grupo.');
       return;
     }
-    setLoading(true);
+    notification.start(csvRows.length, 'grupo');
     try {
-      const res = await fetch(`${API_URL}/api/create-groups`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          groupTitle,
-          groupDesc,
-          descEnabled,
-          addAdmin,
-          adminNumber,
-          waitTime,
-          csvFields,
-          csvRows,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success(`Se crearon ${data.groups.length} grupos correctamente.`);
-      } else {
-        toast.error(data.error || 'Error desconocido al crear los grupos.');
+      for (let i = 0; i < csvRows.length; i++) {
+        const row = csvRows[i];
+        // Reemplazar etiquetas en el nombre y descripción
+        let title = groupTitle;
+        let desc = groupDesc;
+        csvFields.forEach(f => {
+          const regex = new RegExp(`@${f}`, 'g');
+          title = title.replace(regex, row[f] || '');
+          if (descEnabled && desc) desc = desc.replace(regex, row[f] || '');
+        });
+        // Obtener los números de teléfono de la fila
+        const participants: string[] = [];
+        csvFields.forEach(f => {
+          if (/tel|num|fono|cel/i.test(f)) {
+            if (row[f]) participants.push(`${row[f]}@s.whatsapp.net`);
+          }
+        });
+        if (addAdmin && adminNumber) {
+          participants.push(`${adminNumber}@s.whatsapp.net`);
+        }
+        notification.update(title, i + 1);
+        try {
+          const res = await fetch(`${API_URL}/api/create-groups`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              groupTitle: title,
+              groupDesc: desc,
+              descEnabled,
+              addAdmin,
+              adminNumber,
+              waitTime,
+              csvFields,
+              csvRows: [row],
+            }),
+          });
+          const data = await res.json();
+          if (data.success && Array.isArray(data.groups) && data.groups.length > 0) {
+            notification.addResult({ grupo: title, status: 'enviado' });
+          } else {
+            notification.addResult({ grupo: title, status: 'error' });
+          }
+        } catch {
+          notification.addResult({ grupo: title, status: 'error' });
+        }
+        // Esperar el delay indicado
+        await new Promise(res => setTimeout(res, Math.max(Number(waitTime) || 25, 25) * 1000));
       }
+      notification.finish();
     } catch {
+      notification.finish();
       toast.error('Error de red o del servidor al crear los grupos.');
     }
-    setLoading(false);
   };
 
   React.useEffect(() => {
@@ -170,7 +200,12 @@ function Group() {
   }, [groupDesc, descEnabled, csvRows, csvFields]);
 
   return (
-    <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+    <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md relative">
+      {notification.loading && (
+        <div className="absolute inset-0 bg-white bg-opacity-60 z-20 flex items-center justify-center cursor-not-allowed select-none">
+          <span className="text-blue-700 text-lg font-semibold animate-pulse">Creando grupos...</span>
+        </div>
+      )}
       <h2 className="text-2xl font-bold mb-4 text-blue-700">Subir archivo CSV</h2>
       <div
         className={`flex items-center gap-4 p-4 border-2 rounded-lg cursor-pointer transition-colors ${dragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300 bg-gray-100'}`}
@@ -187,13 +222,13 @@ function Group() {
           className="hidden"
           accept=".csv,text/csv"
           onChange={handleInputChange}
-          disabled={loading}
+          disabled={notification.loading}
         />
       </div>
       {fileName && (
         <div className="flex items-center gap-2 mt-3 bg-blue-50 border border-blue-200 rounded px-3 py-2">
           <span className="text-blue-700 font-medium truncate max-w-xs">{fileName}</span>
-          <button onClick={handleRemoveFile} className="ml-2 text-red-500 hover:text-red-700 cursor-pointer" disabled={loading}>
+          <button onClick={handleRemoveFile} className="ml-2 text-red-500 hover:text-red-700 cursor-pointer" disabled={notification.loading}>
             <XCircle size={20} />
           </button>
         </div>
@@ -217,7 +252,7 @@ function Group() {
             onBlur={() => setFocus(null)}
             className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
             placeholder="Ejemplo: Grupo de @nombre - @ciudad"
-            disabled={loading}
+            disabled={notification.loading}
           />
         </div>
       )}
@@ -235,7 +270,7 @@ function Group() {
               checked={descEnabled}
               onChange={handleDescCheck}
               className="accent-blue-600"
-              disabled={loading}
+              disabled={notification.loading}
             />
             Descripción:
           </label>
@@ -249,7 +284,7 @@ function Group() {
                 className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
                 placeholder="Ejemplo: Bienvenidos a @nombre, grupo de @ciudad"
                 rows={3}
-                disabled={loading}
+                disabled={notification.loading}
               />
               {descPreview && focus === 'desc' && (
                 <div className="mb-4 mt-2 p-3 bg-gray-50 border border-gray-200 rounded">
@@ -269,7 +304,7 @@ function Group() {
               checked={addAdmin}
               onChange={e => setAddAdmin(e.target.checked)}
               className="accent-blue-600"
-              disabled={loading}
+              disabled={notification.loading}
             />
             Agregar número como administrador de todos los grupos
           </label>
@@ -285,7 +320,7 @@ function Group() {
               className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
               placeholder="Ejemplo: 59175057788"
               maxLength={15}
-              disabled={loading}
+              disabled={notification.loading}
             />
           )}
         </div>
@@ -300,7 +335,7 @@ function Group() {
               value={waitTime}
               onChange={e => setWaitTime(Number(e.target.value))}
               className="w-full mb-4 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-              disabled={loading}
+              disabled={notification.loading}
             />
           </div>
           <div className="flex justify-center mt-4">
@@ -308,9 +343,9 @@ function Group() {
               className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-2xl shadow-lg hover:from-blue-700 hover:to-blue-500 transition-all duration-200 font-semibold text-lg focus:outline-none focus:ring-4 focus:ring-blue-200 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
               type="button"
               onClick={handleCreateGroups}
-              disabled={loading}
+              disabled={notification.loading}
             >
-              {loading ? (
+              {notification.loading ? (
                 <>
                   <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
