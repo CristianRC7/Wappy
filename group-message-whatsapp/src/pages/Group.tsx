@@ -13,6 +13,7 @@ function Group() {
   const [descEnabled, setDescEnabled] = useState(false);
   const [groupDesc, setGroupDesc] = useState('');
   const [descPreview, setDescPreview] = useState('');
+  const [focus, setFocus] = useState<'title' | 'desc' | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validateFile = (file: File) => {
@@ -173,12 +174,14 @@ function Group() {
             type="text"
             value={groupTitle}
             onChange={handleGroupTitleChange}
+            onFocus={() => setFocus('title')}
+            onBlur={() => setFocus(null)}
             className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
             placeholder="Ejemplo: Grupo de @nombre - @ciudad"
           />
         </div>
       )}
-      {preview && (
+      {preview && focus === 'title' && (
         <div className="mb-4 mt-2 p-3 bg-gray-50 border border-gray-200 rounded">
           <span className="block text-gray-500 text-xs mb-1">Ejemplo de nombre de grupo:</span>
           <span className="text-gray-800 whitespace-pre-line">{preview}</span>
@@ -198,6 +201,8 @@ function Group() {
           <textarea
             value={groupDesc}
             onChange={handleDescChange}
+            onFocus={() => setFocus('desc')}
+            onBlur={() => setFocus(null)}
             className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
             placeholder="Ejemplo: Bienvenidos a @nombre, grupo de @ciudad"
             rows={3}
@@ -205,7 +210,7 @@ function Group() {
           />
         </div>
       )}
-      {descPreview && descEnabled && (
+      {descPreview && descEnabled && focus === 'desc' && (
         <div className="mb-4 mt-2 p-3 bg-gray-50 border border-gray-200 rounded">
           <span className="block text-gray-500 text-xs mb-1">Ejemplo de descripción:</span>
           <span className="text-gray-800 whitespace-pre-line">{descPreview}</span>
