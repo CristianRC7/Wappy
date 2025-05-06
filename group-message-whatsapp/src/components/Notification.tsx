@@ -1,12 +1,20 @@
 import React, { useState } from 'react';
 import { useNotification } from '../context/NotificationContext';
+import * as XLSX from 'xlsx';
 
 const Notification: React.FC = () => {
-  const { sending, current, index, total, finished, results, clear, type } = useNotification();
+  const { sending, current, index, total, finished, results, clear, type, createdGroups } = useNotification();
   const [showModal, setShowModal] = useState(false);
 
   const successCount = results.filter(r => r.status === 'enviado').length;
   const errorCount = results.filter(r => r.status === 'error').length;
+
+  const handleDownloadExcel = () => {
+    const ws = XLSX.utils.json_to_sheet(createdGroups);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Grupos');
+    XLSX.writeFile(wb, 'grupos_creados.xlsx');
+  };
 
   if (!sending && !finished) return null;
 
@@ -51,6 +59,16 @@ const Notification: React.FC = () => {
               title="Cerrar"
             >×</button>
             <h2 className="text-2xl font-bold mb-4 text-blue-700">Resumen de {type === 'grupo' ? 'creación de grupos' : 'envío de mensajes'}</h2>
+            {type === 'grupo' && createdGroups.length > 0 && (
+              <div className="mb-4 flex justify-end">
+                <button
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition-colors cursor-pointer"
+                  onClick={handleDownloadExcel}
+                >
+                  Descargar Excel
+                </button>
+              </div>
+            )}
             <div className="max-h-80 overflow-y-auto">
               <table className="w-full text-left border-collapse">
                 <thead>

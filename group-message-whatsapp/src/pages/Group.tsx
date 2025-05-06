@@ -115,6 +115,7 @@ function Group() {
       return;
     }
     notification.start(csvRows.length, 'grupo');
+    const createdGroups: { grupo: string; link: string }[] = [];
     try {
       for (let i = 0; i < csvRows.length; i++) {
         const row = csvRows[i];
@@ -154,6 +155,9 @@ function Group() {
           });
           const data = await res.json();
           if (data.success && Array.isArray(data.groups) && data.groups.length > 0) {
+            const inviteCode = data.groups[0].inviteCode;
+            const link = inviteCode ? `https://chat.whatsapp.com/${inviteCode}` : '';
+            createdGroups.push({ grupo: title, link });
             notification.addResult({ grupo: title, status: 'enviado' });
           } else {
             notification.addResult({ grupo: title, status: 'error' });
@@ -165,6 +169,8 @@ function Group() {
         await new Promise(res => setTimeout(res, Math.max(Number(waitTime) || 25, 25) * 1000));
       }
       notification.finish();
+      // Guardar los grupos creados en el context para el modal
+      notification.setCreatedGroups(createdGroups);
     } catch {
       notification.finish();
       toast.error('Error de red o del servidor al crear los grupos.');

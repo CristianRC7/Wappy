@@ -34,6 +34,13 @@ router.post('/create-groups', async (req, res) => {
       }
       // Crear el grupo
       const group = await sock.groupCreate(title, participants);
+      // Obtener el código de invitación
+      let inviteCode = null;
+      try {
+        inviteCode = await sock.groupInviteCode(group.id);
+      } catch (e) {
+        inviteCode = null;
+      }
       // Agregar descripción si corresponde
       if (descEnabled && desc) {
         await sock.groupUpdateDescription(group.id, desc);
@@ -42,7 +49,7 @@ router.post('/create-groups', async (req, res) => {
       if (addAdmin && adminNumber) {
         await sock.groupParticipantsUpdate(group.id, [`${adminNumber}@s.whatsapp.net`], 'promote');
       }
-      results.push({ groupId: group.id, title });
+      results.push({ groupId: group.id, title, inviteCode });
       await new Promise(res => setTimeout(res, delay));
     }
     res.json({ success: true, groups: results });
