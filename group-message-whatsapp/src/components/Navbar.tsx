@@ -1,10 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
-import { QrCode, MessageCircle, Users } from 'lucide-react';
+import { QrCode, MessageCircle, Users, MessageSquare } from 'lucide-react';
 
 const navItems = [
   { name: 'QR', path: '/', icon: <QrCode size={22} /> },
   { name: 'Mensajes', path: '/message', icon: <MessageCircle size={22} /> },
   { name: 'Grupos', path: '/group', icon: <Users size={22} /> },
+  { name: 'Chats', path: '/chats', icon: <MessageSquare size={22} /> },
 ];
 
 export default function Navbar() {

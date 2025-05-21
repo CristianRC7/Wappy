@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 import Qr from './pages/Qr';
 import Message from './pages/Message';
 import Group from './pages/Group';
+import Chats from './pages/Chats';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
           <Route path="/" element={<Qr />} />
           <Route path="/message" element={<Message />} />
           <Route path="/group" element={<Group />} />
+          <Route path="/chats" element={<Chats />} />
         </Routes>
       </div>
     </Router>
