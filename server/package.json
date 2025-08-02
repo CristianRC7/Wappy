@@ -13,11 +13,11 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@whiskeysockets/baileys": "^6.17.16",
+    "@whiskeysockets/baileys": "6.7.18",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "http": "^0.0.1-security",
-    "multer": "^1.4.5-lts.2",
+    "multer": "2.0.2",
     "nodemon": "^3.1.10",
     "papaparse": "^5.5.2",
     "qrcode": "^1.5.4",
