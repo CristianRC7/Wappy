@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { UploadCloud, XCircle, Send } from 'lucide-react';
+import { UploadCloud, XCircle, Send, Image as ImageIcon } from 'lucide-react';
 import { alert } from '../components/Alert';
 import Papa from 'papaparse';
 import { useNotification } from '../context/NotificationContext';
@@ -16,8 +16,11 @@ function Message() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [caretPos, setCaretPos] = useState(0);
   const [preview, setPreview] = useState('');
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mediaInputRef = useRef<HTMLInputElement>(null);
   const [sending, setSending] = useState(false);
   const notification = useNotification();
   const bloqueado = notification.sending || notification.finished;
@@ -70,6 +73,48 @@ function Message() {
       setCsvRows([]);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  };
+
+  const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
+    const validTypes = ['image/', 'video/', 'audio/'];
+    const isValid = validTypes.some(type => file.type.startsWith(type));
+    
+    if (!isValid) {
+      alert.error('Solo se permiten archivos de imagen, video o audio');
+      if (mediaInputRef.current) mediaInputRef.current.value = '';
+      return;
+    }
+    
+    if (file.size > 50 * 1024 * 1024) {
+      alert.error('El archivo no debe superar los 50MB');
+      if (mediaInputRef.current) mediaInputRef.current.value = '';
+      return;
+    }
+    
+    setMediaFile(file);
+    
+    // Crear preview solo para imágenes
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setMediaPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else if (file.type.startsWith('video/')) {
+      setMediaPreview('video');
+    } else if (file.type.startsWith('audio/')) {
+      setMediaPreview('audio');
+    }
+  };
+
+  const handleRemoveMedia = () => {
+    setMediaFile(null);
+    setMediaPreview(null);
+    if (mediaInputRef.current) mediaInputRef.current.value = '';
   };
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -161,31 +206,87 @@ function Message() {
       alert.error('El tiempo de espera entre mensajes debe ser al menos 25 segundos.');
       return;
     }
+
     setSending(true);
-    notification.start(csvRows.length);
+    notification.start(csvRows.length, 'mensaje');
+
     try {
-      for (let i = 0; i < csvRows.length; i++) {
-        const row = csvRows[i];
-        let personalized = message;
-        csvFields.forEach(f => {
-          const regex = new RegExp(`@${f}`, 'g');
-          personalized = personalized.replace(regex, row[f] || '');
+      // Si hay archivo multimedia
+      if (mediaFile) {
+        const formData = new FormData();
+        formData.append('media', mediaFile);
+        
+        const messages = csvRows.map(row => {
+          let personalized = message;
+          csvFields.forEach(f => {
+            const regex = new RegExp(`@${f}`, 'g');
+            personalized = personalized.replace(regex, row[f] || '');
+          });
+          return { telefono: row['telefono'], mensaje: personalized };
         });
-        notification.update(row['telefono'] || '', i + 1);
-        const res = await fetch(`${API_URL}/api/send-messages`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: [{ telefono: row['telefono'], mensaje: personalized }], waitTime: waitTime * 1000 })
-        });
-        const data = await res.json();
-        if (data.success) {
-          notification.addResult(row['telefono'] || '', 'enviado');
-        } else {
-          notification.addResult(row['telefono'] || '', 'error');
+        
+        formData.append('data', JSON.stringify({ messages, waitTime: waitTime * 1000 }));
+
+        // Enviar con seguimiento
+        for (let i = 0; i < csvRows.length; i++) {
+          const row = csvRows[i];
+          notification.update(row['telefono'] || '', i + 1);
+          
+          const singleFormData = new FormData();
+          singleFormData.append('media', mediaFile);
+          
+          let personalized = message;
+          csvFields.forEach(f => {
+            const regex = new RegExp(`@${f}`, 'g');
+            personalized = personalized.replace(regex, row[f] || '');
+          });
+          
+          singleFormData.append('data', JSON.stringify({ 
+            messages: [{ telefono: row['telefono'], mensaje: personalized }], 
+            waitTime: waitTime * 1000 
+          }));
+
+          try {
+            const res = await fetch(`${API_URL}/api/send-messages-media`, {
+              method: 'POST',
+              body: singleFormData
+            });
+            const data = await res.json();
+            if (data.success) {
+              notification.addResult(row['telefono'] || '', 'enviado');
+            } else {
+              notification.addResult(row['telefono'] || '', 'error');
+            }
+          } catch {
+            notification.addResult(row['telefono'] || '', 'error');
+          }
+          
+          await new Promise(res => setTimeout(res, waitTime * 1000));
         }
-        await new Promise(res => setTimeout(res, waitTime * 1000));
+      } else {
+        // Envío de texto simple (código original)
+        for (let i = 0; i < csvRows.length; i++) {
+          const row = csvRows[i];
+          let personalized = message;
+          csvFields.forEach(f => {
+            const regex = new RegExp(`@${f}`, 'g');
+            personalized = personalized.replace(regex, row[f] || '');
+          });
+          notification.update(row['telefono'] || '', i + 1);
+          const res = await fetch(`${API_URL}/api/send-messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages: [{ telefono: row['telefono'], mensaje: personalized }], waitTime: waitTime * 1000 })
+          });
+          const data = await res.json();
+          if (data.success) {
+            notification.addResult(row['telefono'] || '', 'enviado');
+          } else {
+            notification.addResult(row['telefono'] || '', 'error');
+          }
+          await new Promise(res => setTimeout(res, waitTime * 1000));
+        }
       }
-      // alert.success('¡Mensajes enviados correctamente!');
     } catch {
       alert.error('Error de red al enviar mensajes');
     } finally {
@@ -198,7 +299,65 @@ function Message() {
     <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md relative">
       {bloqueado && <div className="absolute inset-0 bg-white bg-opacity-60 z-20 flex items-center justify-center cursor-not-allowed select-none"><span className="text-blue-700 text-lg font-semibold animate-pulse">Enviando mensajes...</span></div>}
       <h2 className="text-2xl font-bold mb-4 text-blue-700">Enviar mensaje</h2>
-      <label className="block mb-2 font-medium text-gray-700">Mensaje</label>
+      
+      {/* Selector de archivo multimedia */}
+      <div className="mb-4">
+        <label className="block mb-2 font-medium text-gray-700">Archivo multimedia (opcional)</label>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => mediaInputRef.current?.click()}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            disabled={bloqueado}
+          >
+            <ImageIcon size={20} />
+            Seleccionar archivo
+          </button>
+          <input
+            ref={mediaInputRef}
+            type="file"
+            accept="image/*,video/*,audio/*"
+            onChange={handleMediaChange}
+            className="hidden"
+            disabled={bloqueado}
+          />
+          {mediaFile && (
+            <span className="text-sm text-gray-600 truncate max-w-xs">{mediaFile.name}</span>
+          )}
+        </div>
+        
+        {/* Preview del archivo */}
+        {mediaPreview && (
+          <div className="mt-3 relative inline-block">
+            {mediaPreview !== 'video' && mediaPreview !== 'audio' ? (
+              <img src={mediaPreview} alt="Preview" className="max-w-xs max-h-48 rounded-lg border-2 border-blue-200" />
+            ) : (
+              <div className="px-4 py-8 bg-gray-100 rounded-lg border-2 border-gray-300 text-center">
+                <span className="text-gray-600 font-medium">
+                  {mediaPreview === 'video' ? '🎥 Video seleccionado' : '🎵 Audio seleccionado'}
+                </span>
+              </div>
+            )}
+            <button
+              onClick={handleRemoveMedia}
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+              disabled={bloqueado}
+            >
+              <XCircle size={20} />
+            </button>
+          </div>
+        )}
+        <span className="text-xs text-gray-500 block mt-2">
+          {mediaFile ? 
+            (mediaFile.type.startsWith('audio/') ? 
+              'Nota: Para audios, el mensaje no se enviará como caption.' : 
+              'El mensaje se enviará como descripción del archivo.') : 
+            'Soporta imágenes, videos y audios (máx. 50MB)'}
+        </span>
+      </div>
+
+      <label className="block mb-2 font-medium text-gray-700">
+        Mensaje {mediaFile && mediaFile.type.startsWith('audio/') ? '' : '(descripción)'}
+      </label>
       <div className="relative">
         <textarea
           ref={textareaRef}
