@@ -26,10 +26,15 @@ const upload = multer({
 
 // POST /send-messages (texto simple)
 router.post('/send-messages', async (req, res) => {
-  const { messages, waitTime } = req.body;
-  const sock = getSock();
+  const { messages, waitTime, grupoId } = req.body;
+  
+  if (!grupoId) {
+    return res.status(400).json({ error: 'grupoId es requerido' });
+  }
+  
+  const sock = getSock(grupoId);
   if (!sock) {
-    return res.status(500).json({ error: 'No hay sesión activa de WhatsApp' });
+    return res.status(500).json({ error: 'No hay sesión activa de WhatsApp para este grupo' });
   }
   const delay = Math.max(Number(waitTime) || 25, 25);
   try {
@@ -45,13 +50,18 @@ router.post('/send-messages', async (req, res) => {
 
 // POST /send-messages-media (con imagen/video/audio)
 router.post('/send-messages-media', upload.single('media'), async (req, res) => {
-  const sock = getSock();
-  if (!sock) {
-    return res.status(500).json({ error: 'No hay sesión activa de WhatsApp' });
-  }
-  
   try {
-    const { messages, waitTime } = JSON.parse(req.body.data);
+    const { messages, waitTime, grupoId } = JSON.parse(req.body.data);
+    
+    if (!grupoId) {
+      return res.status(400).json({ error: 'grupoId es requerido' });
+    }
+    
+    const sock = getSock(grupoId);
+    if (!sock) {
+      return res.status(500).json({ error: 'No hay sesión activa de WhatsApp para este grupo' });
+    }
+    
     const mediaFile = req.file;
     
     if (!mediaFile) {

@@ -4,8 +4,10 @@ import { toast } from 'sonner';
 import Papa from 'papaparse';
 import API_URL from '../Config';
 import { useNotification } from '../context/NotificationContext';
+import { useSession } from '../context/Context';
 
 function Group() {
+  const { user } = useSession();
   const [dragActive, setDragActive] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [csvFields, setCsvFields] = useState<string[]>([]);
@@ -115,6 +117,12 @@ function Group() {
       toast.error('Debes subir un CSV válido y definir el nombre del grupo.');
       return;
     }
+    
+    if (!user?.grupoId) {
+      toast.error('No tienes un grupo asignado.');
+      return;
+    }
+    
     notification.start(csvRows.length, 'grupo');
     const createdGroups: any[] = [];
     // Procesar columnas de la plantilla
@@ -157,6 +165,7 @@ function Group() {
               waitTime,
               csvFields,
               csvRows: [row],
+              grupoId: user.grupoId,
             }),
           });
           const data = await res.json();

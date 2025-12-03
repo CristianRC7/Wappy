@@ -4,10 +4,15 @@ const { getSock } = require('./session');
 
 // POST /create-groups
 router.post('/create-groups', async (req, res) => {
-  const { groupTitle, groupDesc, descEnabled, addAdmin, adminNumber, waitTime, csvFields, csvRows } = req.body;
-  const sock = getSock();
+  const { groupTitle, groupDesc, descEnabled, addAdmin, adminNumber, waitTime, csvFields, csvRows, grupoId } = req.body;
+  
+  if (!grupoId) {
+    return res.status(400).json({ error: 'grupoId es requerido' });
+  }
+  
+  const sock = getSock(grupoId);
   if (!sock) {
-    return res.status(500).json({ error: 'No hay sesión activa de WhatsApp' });
+    return res.status(500).json({ error: 'No hay sesión activa de WhatsApp para este grupo' });
   }
   const delay = Math.max(Number(waitTime) || 25, 25) * 1000;
   const results = [];

@@ -23,10 +23,15 @@ router.get('/chats/:number', (req, res) => {
 // Endpoint para enviar un mensaje a un número
 router.post('/chats/:number', async (req, res) => {
   const { number } = req.params;
-  const { message } = req.body;
-  const sock = getSock();
+  const { message, grupoId } = req.body;
+  
+  if (!grupoId) {
+    return res.status(400).json({ error: 'grupoId es requerido' });
+  }
+  
+  const sock = getSock(grupoId);
   if (!sock) {
-    return res.status(500).json({ error: 'No hay sesión activa de WhatsApp' });
+    return res.status(500).json({ error: 'No hay sesión activa de WhatsApp para este grupo' });
   }
   try {
     await sock.sendMessage(`${number}@s.whatsapp.net`, { text: message });

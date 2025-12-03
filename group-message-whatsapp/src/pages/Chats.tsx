@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import API_URL from '../Config';
 import { io, Socket } from 'socket.io-client';
+import { useSession } from '../context/Context';
 
 interface Message {
   fromMe: boolean;
@@ -14,6 +15,7 @@ interface Chat {
 }
 
 const Chats: React.FC = () => {
+  const { user } = useSession();
   const [chats, setChats] = useState<Chat[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -59,13 +61,13 @@ const Chats: React.FC = () => {
   }, [selected]);
 
   const handleSend = async () => {
-    if (!selected || !newMessage.trim()) return;
+    if (!selected || !newMessage.trim() || !user?.grupoId) return;
     setSending(true);
     try {
       await fetch(`${API_URL}/api/chats/${selected}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: newMessage })
+        body: JSON.stringify({ message: newMessage, grupoId: user.grupoId })
       });
       setNewMessage('');
     } finally {

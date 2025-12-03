@@ -1,0 +1,141 @@
+-- ======================================
+-- TABLA: roles
+-- ======================================
+CREATE TABLE roles (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(50) UNIQUE NOT NULL,
+    descripcion TEXT
+);
+
+
+-- ======================================
+-- TABLA: usuarios
+-- ======================================
+CREATE TABLE usuarios (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL,
+    apellido VARCHAR(150) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    usuario VARCHAR(150) NOT NULL,
+    contrasena TEXT NOT NULL,
+    telefono VARCHAR(50),
+    role_id INT REFERENCES roles(id)
+);
+
+-- ======================================
+-- TABLA: grupos
+-- ======================================
+CREATE TABLE grupos (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL,
+    descripcion TEXT
+);
+
+-- ======================================
+-- TABLA: grupo_usuario
+-- Relación de usuarios con grupos
+-- ======================================
+CREATE TABLE grupo_usuario (
+    id SERIAL PRIMARY KEY,
+    usuario_id INT REFERENCES usuarios(id) ON DELETE CASCADE,
+    grupo_id INT REFERENCES grupos(id) ON DELETE CASCADE,
+    UNIQUE (usuario_id, grupo_id)
+);
+
+-- ======================================
+-- TABLA: whatsapp_sesion
+-- Sesión de WhatsApp asociada a un grupo
+-- ======================================
+CREATE TABLE whatsapp_sesion (
+    id SERIAL PRIMARY KEY,
+    grupo_id INT UNIQUE REFERENCES grupos(id) ON DELETE CASCADE,
+    ruta_auth VARCHAR(255) NOT NULL
+);
+
+-- ======================================
+-- TABLA: alertas
+-- Alertas/Recordatorios del sistema
+-- ======================================
+CREATE TABLE alertas (
+    id SERIAL PRIMARY KEY,
+    titulo VARCHAR(200) NOT NULL,
+    descripcion TEXT NOT NULL,
+    fecha_hora TIMESTAMP NOT NULL,
+    grupo_id INT REFERENCES grupos(id) ON DELETE CASCADE,
+    creado_por INT REFERENCES usuarios(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    estado VARCHAR(20) DEFAULT 'pendiente' -- pendiente, enviada, cancelada
+);
+
+-- ======================================
+-- TABLA: alerta_destinatarios
+-- Destinatarios de cada alerta
+-- ======================================
+CREATE TABLE alerta_destinatarios (
+    id SERIAL PRIMARY KEY,
+    alerta_id INT REFERENCES alertas(id) ON DELETE CASCADE,
+    usuario_id INT REFERENCES usuarios(id) ON DELETE CASCADE,
+    enviado BOOLEAN DEFAULT FALSE,
+    fecha_envio TIMESTAMP,
+    UNIQUE (alerta_id, usuario_id)
+);
+
+drop table whatsapp_sesion
+
+-- ======================================
+-- EJEMPLO DE DATOS
+-- ======================================
+
+
+-- Insertando roles base
+INSERT INTO roles (nombre, descripcion) VALUES
+('admin', 'Control total de la aplicación'),
+('encargado_grupo', 'Gestiona su grupo y sesión de WhatsApp'),
+('integrante_grupo', 'Puede enviar mensajes masivos y campañas');
+
+-- Usuarios
+INSERT INTO usuarios (nombre, apellido, email, usuario, contrasena, telefono, role_id) VALUES
+('Admin', 'Pagina', 'admin@gmail.com', 'admin', '8182bbea6467267b1aaa9e3c336c4c64', '59175057788', 1),       -- admin
+('Cristian', 'Ramirez', 'cristian2002ramirez25@gmail.com', 'cdramirez', '8182bbea6467267b1aaa9e3c336c4c64', '59175057788', 2),         -- encargado_grupo
+('Ricardo', 'Marquez', 'ricardo@gmail.com', 'black', '8182bbea6467267b1aaa9e3c336c4c64', '59177095391', 3),      -- integrante_grupo
+('Marcelo', 'Tapia', 'marcelo@gmail.com', 'marcelo', '8182bbea6467267b1aaa9e3c336c4c64', '59178901234', 2);
+
+select * from usuarios
+-- Grupos
+INSERT INTO grupos (nombre, descripcion) VALUES
+('Marketing', 'Grupo encargado de las campañas de marketing y publicidad'),
+('Ventas', 'Grupo dedicado a las ventas y atención al cliente');
+
+select * from grupos;
+
+-- Asignar usuarios a grupos
+INSERT INTO grupo_usuario (usuario_id, grupo_id) VALUES
+(2, 1),  -- Cristian en Marketing (encargado)
+(3, 1),  -- Ricardo en Marketing (integrante)
+(4,2);
+
+select * from grupo_usuario;
+
+-- Sesión de WhatsApp
+INSERT INTO whatsapp_sesion (grupo_id, ruta_auth) VALUES
+(1, 'auth_info/1'),
+(2, 'auth_info/2');
+
+select * from whatsapp_sesion;
+
+-- Alertas de ejemplo
+INSERT INTO alertas (titulo, descripcion, fecha_hora, grupo_id, creado_por, estado) VALUES
+('Reunión de Ventas', 'Reunión semanal del equipo de ventas para revisar resultados', '2025-12-05 10:00:00', 2, 4, 'pendiente'),
+('Campaña Marketing', 'Lanzamiento de nueva campaña publicitaria en redes sociales', '2025-12-06 15:30:00', 1, 2, 'pendiente');
+
+select * from alertas;
+
+-- Destinatarios de alertas
+INSERT INTO alerta_destinatarios (alerta_id, usuario_id, enviado) VALUES
+(1, 4, false),  -- Alerta 1 para Marcelo (Ventas)
+(2, 2, false),  -- Alerta 2 para Cristian (Marketing)
+(2, 3, false);  -- Alerta 2 para Ricardo (Marketing)
+
+select * from alerta_destinatarios;
+
+TRUNCATE TABLE usuarios RESTART IDENTITY CASCADE;

@@ -1,22 +1,35 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import Login from './pages/Login';
 import Qr from './pages/Qr';
 import Message from './pages/Message';
 import Group from './pages/Group';
 import Chats from './pages/Chats';
 
-function App() {
+function AppContent() {
+  const location = useLocation();
+  const isLoginPage = location.pathname === '/';
+
   return (
-    <Router>
-      <Navbar />
-      <div className="p-4">
+    <>
+      {!isLoginPage && <Navbar />}
+      <div className={isLoginPage ? '' : 'p-4'}>
         <Routes>
-          <Route path="/" element={<Qr />} />
+          <Route path="/" element={<Login />} />
+          <Route path="/qr" element={<Qr />} />
           <Route path="/message" element={<Message />} />
           <Route path="/group" element={<Group />} />
           <Route path="/chats" element={<Chats />} />
         </Routes>
       </div>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
     </Router>
   );
 }

@@ -4,8 +4,10 @@ import { alert } from '../components/Alert';
 import Papa from 'papaparse';
 import { useNotification } from '../context/NotificationContext';
 import API_URL from '../Config';
+import { useSession } from '../context/Context';
 
 function Message() {
+  const { user } = useSession();
   const [dragActive, setDragActive] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [csvFields, setCsvFields] = useState<string[]>([]);
@@ -206,6 +208,11 @@ function Message() {
       alert.error('El tiempo de espera entre mensajes debe ser al menos 25 segundos.');
       return;
     }
+    
+    if (!user?.grupoId) {
+      alert.error('No tienes un grupo asignado.');
+      return;
+    }
 
     setSending(true);
     notification.start(csvRows.length, 'mensaje');
@@ -213,21 +220,6 @@ function Message() {
     try {
       // Si hay archivo multimedia
       if (mediaFile) {
-        const formData = new FormData();
-        formData.append('media', mediaFile);
-        
-        const messages = csvRows.map(row => {
-          let personalized = message;
-          csvFields.forEach(f => {
-            const regex = new RegExp(`@${f}`, 'g');
-            personalized = personalized.replace(regex, row[f] || '');
-          });
-          return { telefono: row['telefono'], mensaje: personalized };
-        });
-        
-        formData.append('data', JSON.stringify({ messages, waitTime: waitTime * 1000 }));
-
-        // Enviar con seguimiento
         for (let i = 0; i < csvRows.length; i++) {
           const row = csvRows[i];
           notification.update(row['telefono'] || '', i + 1);
@@ -243,7 +235,8 @@ function Message() {
           
           singleFormData.append('data', JSON.stringify({ 
             messages: [{ telefono: row['telefono'], mensaje: personalized }], 
-            waitTime: waitTime * 1000 
+            waitTime: waitTime * 1000,
+            grupoId: user.grupoId
           }));
 
           try {
@@ -253,18 +246,18 @@ function Message() {
             });
             const data = await res.json();
             if (data.success) {
-              notification.addResult(row['telefono'] || '', 'enviado');
+              notification.addResult({ telefono: row['telefono'] || '', status: 'enviado' });
             } else {
-              notification.addResult(row['telefono'] || '', 'error');
+              notification.addResult({ telefono: row['telefono'] || '', status: 'error' });
             }
           } catch {
-            notification.addResult(row['telefono'] || '', 'error');
+            notification.addResult({ telefono: row['telefono'] || '', status: 'error' });
           }
           
           await new Promise(res => setTimeout(res, waitTime * 1000));
         }
       } else {
-        // Envío de texto simple (código original)
+        // Envío de texto simple
         for (let i = 0; i < csvRows.length; i++) {
           const row = csvRows[i];
           let personalized = message;
@@ -276,13 +269,17 @@ function Message() {
           const res = await fetch(`${API_URL}/api/send-messages`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages: [{ telefono: row['telefono'], mensaje: personalized }], waitTime: waitTime * 1000 })
+            body: JSON.stringify({ 
+              messages: [{ telefono: row['telefono'], mensaje: personalized }], 
+              waitTime: waitTime * 1000,
+              grupoId: user.grupoId
+            })
           });
           const data = await res.json();
           if (data.success) {
-            notification.addResult(row['telefono'] || '', 'enviado');
+            notification.addResult({ telefono: row['telefono'] || '', status: 'enviado' });
           } else {
-            notification.addResult(row['telefono'] || '', 'error');
+            notification.addResult({ telefono: row['telefono'] || '', status: 'error' });
           }
           await new Promise(res => setTimeout(res, waitTime * 1000));
         }
@@ -294,6 +291,29 @@ function Message() {
       notification.finish();
     }
   };
+
+  // Validación después de todos los hooks
+  if (!user) {
+    return (
+      <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+        <div className="text-center py-8">
+          <p className="text-red-600 font-bold text-lg mb-2">No has iniciado sesión</p>
+          <p className="text-gray-600">Por favor, inicia sesión para continuar</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user.grupoId) {
+    return (
+      <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
+        <div className="text-center py-8">
+          <p className="text-red-600 font-bold text-lg mb-2">No tienes un grupo asignado</p>
+          <p className="text-gray-600">Contacta al administrador para que te asigne un grupo</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md relative">
