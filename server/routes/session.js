@@ -21,6 +21,8 @@ async function startSock(socket) {
   sock = makeWASocket({
     auth: state,
     printQRInTerminal: false,
+    generateHighQualityLinkPreview: false,
+    linkPreviewImageThumbnailWidth: 0,
   });
 
   sock.ev.on('connection.update', async (update) => {

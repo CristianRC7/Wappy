@@ -5,6 +5,17 @@ const { getSock } = require('./session');
 const fs = require('fs');
 const path = require('path');
 
+// Función para limpiar y validar números de teléfono
+function cleanPhoneNumber(phone) {
+  // Remover espacios, guiones, paréntesis y símbolos de más
+  let cleaned = String(phone).replace(/[\s\-\(\)\+]/g, '');
+  // Si comienza con 00, quitarlo (formato internacional)
+  if (cleaned.startsWith('00')) {
+    cleaned = cleaned.substring(2);
+  }
+  return cleaned;
+}
+
 // Configurar multer para almacenar archivos temporalmente
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -27,19 +38,47 @@ const upload = multer({
 // POST /send-messages (texto simple)
 router.post('/send-messages', async (req, res) => {
   const { messages, waitTime } = req.body;
+  console.log('📨 Recibida petición de envío de mensajes:', { totalMensajes: messages?.length, waitTime });
+  
   const sock = getSock();
   if (!sock) {
+    console.error('❌ No hay sesión activa de WhatsApp');
     return res.status(500).json({ error: 'No hay sesión activa de WhatsApp' });
   }
+  
+  console.log('✅ Socket de WhatsApp disponible');
   const delay = Math.max(Number(waitTime) || 25, 25);
+  const results = [];
+  
   try {
-    for (const { telefono, mensaje } of messages) {
-      await sock.sendMessage(`${telefono}@s.whatsapp.net`, { text: mensaje });
-      await new Promise(res => setTimeout(res, delay));
+    for (let i = 0; i < messages.length; i++) {
+      const { telefono, mensaje } = messages[i];
+      const cleanedPhone = cleanPhoneNumber(telefono);
+      const jid = `${cleanedPhone}@s.whatsapp.net`;
+      
+      console.log(`📤 Enviando mensaje ${i + 1}/${messages.length} a ${telefono} (limpio: ${cleanedPhone})...`);
+      
+      try {
+        const result = await sock.sendMessage(jid, { text: mensaje });
+        console.log(`✅ Mensaje ${i + 1} enviado exitosamente a ${telefono}`, result.key);
+        results.push({ telefono, success: true, messageId: result.key.id });
+      } catch (msgErr) {
+        console.error(`❌ Error enviando mensaje ${i + 1} a ${telefono}:`, msgErr.message);
+        results.push({ telefono, success: false, error: msgErr.message });
+      }
+      
+      if (i < messages.length - 1) {
+        console.log(`⏳ Esperando ${delay}ms antes del siguiente mensaje...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
     }
-    res.json({ success: true });
+    
+    const successCount = results.filter(r => r.success).length;
+    console.log(`✅ Proceso completado: ${successCount}/${messages.length} mensajes enviados`);
+    res.json({ success: true, results, totalSent: successCount, totalFailed: messages.length - successCount });
   } catch (err) {
-    res.status(500).json({ error: 'Error enviando mensajes', details: err.message });
+    console.error('❌ Error general en el proceso de envío:', err);
+    res.status(500).json({ error: 'Error enviando mensajes', details: err.message, results });
   }
 });
 
@@ -76,6 +115,11 @@ router.post('/send-messages-media', upload.single('media'), async (req, res) => 
     
     for (const { telefono, mensaje } of messages) {
       try {
+        const cleanedPhone = cleanPhoneNumber(telefono);
+        const jid = `${cleanedPhone}@s.whatsapp.net`;
+        
+        console.log(`📤 Enviando mensaje multimedia a ${telefono} (limpio: ${cleanedPhone})...`);
+        
         const messageContent = {
           [mediaType]: mediaBuffer,
         };
@@ -90,10 +134,12 @@ router.post('/send-messages-media', upload.single('media'), async (req, res) => 
           messageContent.mimetype = mimetype;
         }
 
-        await sock.sendMessage(`${telefono}@s.whatsapp.net`, messageContent);
-        results.push({ telefono, success: true });
+        const result = await sock.sendMessage(jid, messageContent);
+        console.log(`✅ Mensaje multimedia enviado a ${telefono}`, result.key);
+        results.push({ telefono, success: true, messageId: result.key.id });
         await new Promise(resolve => setTimeout(resolve, delay));
       } catch (err) {
+        console.error(`❌ Error enviando a ${telefono}:`, err.message);
         results.push({ telefono, success: false, error: err.message });
       }
     }
