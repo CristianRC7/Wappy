@@ -373,45 +373,167 @@ server/
 ## 🚀 Instalación y Ejecución
 
 ### Prerrequisitos
-- Node.js 18+
-- npm o yarn
+- **Node.js** 18+ ([Descargar aquí](https://nodejs.org/))
+- **npm** (incluido con Node.js) o **yarn**
 
-### Backend
+---
+
+### 📦 Instalación de Dependencias
+
+Antes de ejecutar el proyecto, instala las dependencias tanto del frontend como del backend.
+
+#### 1️⃣ Instalar dependencias del Backend
 ```bash
 cd server
 npm install
-node index
 ```
-El servidor correrá en `http://localhost:3005`
 
-### Frontend
+#### 2️⃣ Instalar dependencias del Frontend
 ```bash
 cd group-message-whatsapp
 npm install
+```
+
+---
+
+### ▶️ Ejecución del Proyecto
+
+Para que la aplicación funcione correctamente, **debes ejecutar tanto el backend como el frontend** en terminales separadas.
+
+#### 🔧 Paso 1: Iniciar el Servidor Backend
+
+Abre una terminal y ejecuta:
+
+```bash
+cd server
+node index
+```
+
+✅ **El servidor estará corriendo en:** `http://localhost:3005`
+
+**Salida esperada:**
+```
+Servidor corriendo en el puerto 3005
+Socket.io configurado correctamente
+```
+
+---
+
+#### 🎨 Paso 2: Iniciar el Frontend
+
+Abre **otra terminal** (manteniendo el backend activo) y ejecuta:
+
+```bash
+cd group-message-whatsapp
 npm run dev
 ```
-La aplicación estará disponible en `http://localhost:5173`
+
+✅ **La aplicación estará disponible en:** `http://localhost:5173`
+
+**Salida esperada:**
+```
+VITE v7.2.4  ready in XXX ms
+
+➜  Local:   http://localhost:5173/
+➜  Network: use --host to expose
+```
+
+---
+
+### 🎬 Demostración de Inicio
+
+![Proceso de inicio del proyecto](https://github.com/user-attachments/assets/6588e9f1-528b-4bd3-9bf8-0e4ebdfc03fd)
+
+*GIF mostrando el proceso completo de inicialización del backend y frontend*
+
+---
+
+### 📝 Resumen de Comandos
+
+| Acción | Comando | Puerto |
+|--------|---------|--------|
+| **Backend** | `cd server && node index` | 3005 |
+| **Frontend** | `cd group-message-whatsapp && npm run dev` | 5173 |
+
+> **💡 Tip**: Mantén ambas terminales abiertas mientras uses la aplicación. Si cierras alguna, esa parte del sistema dejará de funcionar.
+
+---
+
+### 🔄 Modo Desarrollo (Opcional)
+
+Si estás desarrollando y quieres que el backend se reinicie automáticamente al hacer cambios:
+
+```bash
+cd server
+npm run dev
+```
+
+Esto usará **nodemon** para detectar cambios y reiniciar el servidor automáticamente.
 
 ---
 
 ## 📱 Flujo de Uso
 
-1. **Autenticación**: Escanea el código QR en la página principal
-2. **Envío de Mensajes**:
-   - Sube un archivo CSV/Excel con contactos, Obligatoriamente la columna de  "telefono"
-   - Escribe el mensaje con variables dinámicas (las variables son dependiendo de las columnas del csv)
-   - (Opcional) Adjunta archivos multimedia
-   - Configura tiempo de espera
-   - Envía mensajes
-3. **Creación de Grupos**:
-   - Sube archivo con nombres de grupos (para la creacion de nombres utiliza las etiquetas dinamicas del csv)
-   - (Opcional) Agrega una descripcion al grupo
-   - (Opcional 2) Adjunta un usuario con rol Administrador en todos los grupos
-   - Descarga Excel con links de invitación
-4. **Gestión de Chats**: (en Desarrollo)
-   - Visualiza todas tus conversaciones
-   - Busca contactos específicos
-   - Ve mensajes recibidos en tiempo real
+### 1. **Autenticación con WhatsApp** 🔐
+
+Al iniciar la aplicación por primera vez, debes vincular tu cuenta de WhatsApp:
+
+1. Abre la aplicación en `http://localhost:5173`
+2. Escanea el código QR con tu WhatsApp
+3. Ve a **WhatsApp > Dispositivos vinculados > Vincular un dispositivo**
+4. Escanea el código QR que aparece en la pantalla
+5. ✅ Una vez autenticado, verás el mensaje de éxito
+
+![Proceso de autenticación con código QR](https://github.com/user-attachments/assets/7b7cc3b0-7833-4f96-9d4f-f7ff8c60c954)
+
+*Demostración del proceso de escaneo del código QR y autenticación exitosa*
+
+> **📌 Nota**: La sesión se mantiene activa mientras no cierres sesión o elimines la carpeta `auth_info/`
+
+---
+
+### 2. **Envío de Mensajes** 📨
+
+Una vez autenticado, puedes enviar mensajes masivos personalizados:
+
+1. Ve a la sección **"Mensajes"** en el menú
+2. Sube un archivo CSV/Excel con contactos
+   - **Obligatorio**: Columna `telefono` con código de país
+   - **Opcional**: Otras columnas para personalización (nombre, apellido, ciudad, etc.)
+3. Escribe el mensaje usando variables dinámicas
+   - Ejemplo: `Hola {{nombre}}, te escribo desde {{ciudad}}`
+   - Las variables se autocompletan según las columnas del CSV
+4. **(Opcional)** Adjunta archivos multimedia (imágenes, videos, documentos)
+5. Configura el tiempo de espera entre mensajes (recomendado: 25-30 segundos)
+6. Haz clic en **"Enviar Mensajes"**
+7. Observa el progreso en tiempo real con la barra de notificaciones
+
+---
+
+### 3. **Creación de Grupos** 👥
+
+Crea múltiples grupos de WhatsApp automáticamente:
+
+1. Ve a la sección **"Grupos"** en el menú
+2. Sube un archivo CSV/Excel con la información de los grupos
+   - Columna `grupo`: Nombre del grupo (puede usar variables dinámicas)
+   - Las demás columnas serán los participantes a agregar
+3. **(Opcional)** Agrega una descripción para todos los grupos
+4. **(Opcional)** Define un usuario administrador para todos los grupos
+5. Haz clic en **"Crear Grupos"**
+6. Espera a que se procesen todos los grupos
+7. Descarga el archivo Excel con los **links de invitación** de cada grupo creado
+
+---
+
+### 4. **Gestión de Chats** 💬 *(En Desarrollo)*
+
+Esta funcionalidad está en desarrollo y próximamente permitirá:
+
+- Visualizar todas tus conversaciones activas
+- Buscar contactos específicos
+- Ver mensajes recibidos en tiempo real
+- Responder mensajes desde la interfaz
 ---
 
 ## 📝 Formato de Archivos CSV/Excel
