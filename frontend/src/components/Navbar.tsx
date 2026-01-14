@@ -13,7 +13,7 @@ export default function Navbar() {
   return (
     <nav className="bg-white shadow-lg px-6 py-3 flex items-center justify-between sticky top-0 z-50 backdrop-blur bg-opacity-90">
       <div className="text-xl font-bold text-blue-600 flex items-center gap-2">
-        <QrCode size={28} className="text-blue-500" /> WhatsApp
+        <QrCode size={28} className="text-blue-500" /> Wappy
       </div>
       <ul className="flex gap-6">
         {navItems.map((item) => (

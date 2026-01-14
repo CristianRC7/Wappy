@@ -287,7 +287,7 @@ function Group() {
               type="checkbox"
               checked={descEnabled}
               onChange={handleDescCheck}
-              className="accent-blue-600"
+              className="accent-blue-600 cursor-pointer"
               disabled={notification.loading}
             />
             Descripción:
@@ -321,7 +321,7 @@ function Group() {
               type="checkbox"
               checked={addAdmin}
               onChange={e => setAddAdmin(e.target.checked)}
-              className="accent-blue-600"
+              className="accent-blue-600 cursor-pointer"
               disabled={notification.loading}
             />
             Agregar número como administrador de todos los grupos

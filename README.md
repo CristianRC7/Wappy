@@ -1,4 +1,6 @@
-# WhatsApp Group Message Manager
+# Wappy
+
+<img width="3072" height="1677" alt="Image" src="https://github.com/user-attachments/assets/bfcd3cd4-60c2-4d3d-bdf6-b173589c08d4" />
 
 Sistema web para enviar mensajes masivos y gestionar grupos de WhatsApp mediante la API de Baileys. Permite autenticación con código QR, envío de mensajes personalizados desde archivos CSV/Excel con variables dinámicas, creación de grupos, y gestión de chats.
 
