@@ -11,7 +11,7 @@ El proyecto está dividido en dos partes principales: **Frontend (React + TypeSc
 ```
 whatsapp/
 ├── frontend/    # Frontend - Aplicación React
-└── server/                    # Backend - API Node.js + WhatsApp Integration
+└── server/      # Backend - API Node.js + WhatsApp Integration
 ```
 
 ---
@@ -27,7 +27,7 @@ src/
 ├── main.tsx                   # Punto de entrada de la aplicación React
 ├── index.css                  # Estilos globales de la aplicación
 ├── Config.ts                  # Configuración de URLs de la API
-├── vite-env.d.ts             # Declaraciones de tipos para Vite
+├── vite-env.d.ts              # Declaraciones de tipos para Vite
 ├── assets/                    # Recursos estáticos (imágenes, iconos, etc.)
 ├── components/                # Componentes reutilizables
 ├── context/                   # Context API para estado global
