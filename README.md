@@ -8,13 +8,13 @@ El proyecto está dividido en dos partes principales: **Frontend (React + TypeSc
 
 ```
 whatsapp/
-├── group-message-whatsapp/    # Frontend - Aplicación React
+├── frontend/    # Frontend - Aplicación React
 └── server/                    # Backend - API Node.js + WhatsApp Integration
 ```
 
 ---
 
-## 📁 Estructura del Frontend (`group-message-whatsapp/src`)
+## 📁 Estructura del Frontend (`frontend/src`)
 
 ### 📂 Directorio Raíz (`src/`)
 
@@ -390,7 +390,7 @@ npm install
 
 #### 2️⃣ Instalar dependencias del Frontend
 ```bash
-cd group-message-whatsapp
+cd frontend
 npm install
 ```
 
@@ -424,7 +424,7 @@ Socket.io configurado correctamente
 Abre **otra terminal** (manteniendo el backend activo) y ejecuta:
 
 ```bash
-cd group-message-whatsapp
+cd frontend
 npm run dev
 ```
 
@@ -453,7 +453,7 @@ VITE v7.2.4  ready in XXX ms
 | Acción | Comando | Puerto |
 |--------|---------|--------|
 | **Backend** | `cd server && node index` | 3005 |
-| **Frontend** | `cd group-message-whatsapp && npm run dev` | 5173 |
+| **Frontend** | `cd frontend && npm run dev` | 5173 |
 
 > **💡 Tip**: Mantén ambas terminales abiertas mientras uses la aplicación. Si cierras alguna, esa parte del sistema dejará de funcionar.
 
@@ -861,7 +861,7 @@ rm -rf node_modules package-lock.json
 npm install
 
 # Frontend - Reinstalar dependencias
-cd group-message-whatsapp
+cd frontend
 rm -rf node_modules package-lock.json
 npm install
 ```
