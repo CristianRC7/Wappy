@@ -116,7 +116,7 @@ function Group() {
       return;
     }
     notification.start(csvRows.length, 'grupo');
-    const createdGroups: any[] = [];
+    const createdGroups: Array<Record<string, string>> = [];
     // Procesar columnas de la plantilla
     const columns = columnTemplate
       .split(',')
@@ -164,7 +164,7 @@ function Group() {
             const inviteCode = data.groups[0].inviteCode;
             const link = inviteCode ? `https://chat.whatsapp.com/${inviteCode}` : '';
             // Construir objeto para el Excel según columnas elegidas
-            const excelRow: any = {};
+            const excelRow: Record<string, string> = {};
             columns.forEach(col => {
               const key = col.replace('@', '');
               excelRow[key] = row[key] || '';

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState } from 'react';
 
 interface SendResult {
@@ -31,7 +32,17 @@ interface NotificationContextProps extends NotificationState {
 const NotificationContext = createContext<NotificationContextProps | undefined>(undefined);
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<NotificationState>({ current: null, total: 0, index: 0, sending: false, results: [], finished: false, type: null, loading: false, createdGroups: [] });
+  const [state, setState] = useState<NotificationState>({ 
+    current: null, 
+    total: 0, 
+    index: 0, 
+    sending: false, 
+    results: [], 
+    finished: false, 
+    type: null, 
+    loading: false, 
+    createdGroups: [] 
+  });
 
   const start = (total: number, type: 'mensaje' | 'grupo') => setState(s => ({ ...s, current: null, total, index: 0, sending: true, results: [], finished: false, type, loading: true }));
   const update = (current: string, index: number) => setState(s => ({ ...s, current, index }));
@@ -52,4 +63,4 @@ export const useNotification = () => {
   const ctx = useContext(NotificationContext);
   if (!ctx) throw new Error('useNotification debe usarse dentro de NotificationProvider');
   return ctx;
-}; 
+};
