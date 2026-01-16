@@ -1,0 +1,8 @@
+{
+  "watch": ["routes", "*.js"],
+  "ignore": [
+    "auth_info/**",
+    "uploads/**"
+  ],
+  "ext": "js,json"
+}
