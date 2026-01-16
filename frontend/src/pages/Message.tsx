@@ -253,12 +253,12 @@ function Message() {
             });
             const data = await res.json();
             if (data.success) {
-              notification.addResult(row['telefono'] || '', 'enviado');
+              notification.addResult({ telefono: row['telefono'] || '', status: 'enviado' });
             } else {
-              notification.addResult(row['telefono'] || '', 'error');
+              notification.addResult({ telefono: row['telefono'] || '', status: 'error' });
             }
           } catch {
-            notification.addResult(row['telefono'] || '', 'error');
+            notification.addResult({ telefono: row['telefono'] || '', status: 'error' });
           }
           
           await new Promise(res => setTimeout(res, waitTime * 1000));
@@ -280,9 +280,9 @@ function Message() {
           });
           const data = await res.json();
           if (data.success) {
-            notification.addResult(row['telefono'] || '', 'enviado');
+            notification.addResult({ telefono: row['telefono'] || '', status: 'enviado' });
           } else {
-            notification.addResult(row['telefono'] || '', 'error');
+            notification.addResult({ telefono: row['telefono'] || '', status: 'error' });
           }
           await new Promise(res => setTimeout(res, waitTime * 1000));
         }

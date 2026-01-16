@@ -1,2 +1,3 @@
-const API_URL: string = 'http://localhost:3005';
-export default API_URL; 
+const API_URL: string = import.meta.env.VITE_API_URL || 'http://localhost:3005';
+
+export default API_URL;
