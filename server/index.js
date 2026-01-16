@@ -1,8 +1,9 @@
+require('dotenv').config();
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const path = require('path');
 const sessionRoutes = require('./routes/session');
 const messageRoutes = require('./routes/message');
 const groupRoutes = require('./routes/group');
@@ -10,27 +11,30 @@ const { router: chatsRoutes, registerIncomingMessage } = require('./routes/chats
 
 const app = express();
 const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
     methods: ['GET', 'POST']
   }
 });
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || 'http://localhost:5173'
+}));
+
 app.use(express.json());
 app.set('io', io);
 app.use('/api', messageRoutes);
 app.use('/api', groupRoutes);
 app.use('/api', chatsRoutes);
 
-const PORT = 3005;
+const PORT = process.env.PORT || 3005;
 
 io.on('connection', (socket) => {
   sessionRoutes.handleSocketConnection(socket);
 });
 
-// Integrar el registro de mensajes recibidos desde Baileys
 const { getSock } = require('./routes/session');
 setInterval(() => {
   const sock = getSock();
