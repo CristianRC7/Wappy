@@ -197,86 +197,53 @@ function Message() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleSendMessages = async () => {
-    if (!message || csvRows.length === 0) {
-      alert.error('Debes cargar un archivo CSV válido y escribir un mensaje.');
-      return;
-    }
-    if (waitTime < 25) {
-      alert.error('El tiempo de espera entre mensajes debe ser al menos 25 segundos.');
-      return;
-    }
+ const handleSendMessages = async () => {
+  if (!message || csvRows.length === 0) {
+    alert.error('Debes cargar un archivo CSV válido y escribir un mensaje.');
+    return;
+  }
+  if (waitTime < 25) {
+    alert.error('El tiempo de espera entre mensajes debe ser al menos 25 segundos.');
+    return;
+  }
 
-    setSending(true);
-    notification.start(csvRows.length, 'mensaje');
+  setSending(true);
+  notification.start(csvRows.length, 'mensaje');
+  
+  // Obtener la referencia de cancelación
+  const cancelRef = notification.getCancelRef();
 
-    try {
-      // Si hay archivo multimedia
-      if (mediaFile) {
-        const formData = new FormData();
-        formData.append('media', mediaFile);
+  try {
+    // Si hay archivo multimedia
+    if (mediaFile) {
+      for (let i = 0; i < csvRows.length; i++) {
+        // Verificar cancelación ANTES de cada iteración
+        if (cancelRef.current) {
+          console.log('✋ Proceso cancelado por el usuario en mensaje', i + 1);
+          break;
+        }
+
+        const row = csvRows[i];
+        notification.update(row['telefono'] || '', i + 1);
         
-        const messages = csvRows.map(row => {
-          let personalized = message;
-          csvFields.forEach(f => {
-            const regex = new RegExp(`@${f}`, 'g');
-            personalized = personalized.replace(regex, row[f] || '');
-          });
-          return { telefono: row['telefono'], mensaje: personalized };
+        const singleFormData = new FormData();
+        singleFormData.append('media', mediaFile);
+        
+        let personalized = message;
+        csvFields.forEach(f => {
+          const regex = new RegExp(`@${f}`, 'g');
+          personalized = personalized.replace(regex, row[f] || '');
         });
         
-        formData.append('data', JSON.stringify({ messages, waitTime: waitTime * 1000 }));
+        singleFormData.append('data', JSON.stringify({ 
+          messages: [{ telefono: row['telefono'], mensaje: personalized }], 
+          waitTime: waitTime * 1000 
+        }));
 
-        // Enviar con seguimiento
-        for (let i = 0; i < csvRows.length; i++) {
-          const row = csvRows[i];
-          notification.update(row['telefono'] || '', i + 1);
-          
-          const singleFormData = new FormData();
-          singleFormData.append('media', mediaFile);
-          
-          let personalized = message;
-          csvFields.forEach(f => {
-            const regex = new RegExp(`@${f}`, 'g');
-            personalized = personalized.replace(regex, row[f] || '');
-          });
-          
-          singleFormData.append('data', JSON.stringify({ 
-            messages: [{ telefono: row['telefono'], mensaje: personalized }], 
-            waitTime: waitTime * 1000 
-          }));
-
-          try {
-            const res = await fetch(`${API_URL}/api/send-messages-media`, {
-              method: 'POST',
-              body: singleFormData
-            });
-            const data = await res.json();
-            if (data.success) {
-              notification.addResult({ telefono: row['telefono'] || '', status: 'enviado' });
-            } else {
-              notification.addResult({ telefono: row['telefono'] || '', status: 'error' });
-            }
-          } catch {
-            notification.addResult({ telefono: row['telefono'] || '', status: 'error' });
-          }
-          
-          await new Promise(res => setTimeout(res, waitTime * 1000));
-        }
-      } else {
-        // Envío de texto simple (código original)
-        for (let i = 0; i < csvRows.length; i++) {
-          const row = csvRows[i];
-          let personalized = message;
-          csvFields.forEach(f => {
-            const regex = new RegExp(`@${f}`, 'g');
-            personalized = personalized.replace(regex, row[f] || '');
-          });
-          notification.update(row['telefono'] || '', i + 1);
-          const res = await fetch(`${API_URL}/api/send-messages`, {
+        try {
+          const res = await fetch(`${API_URL}/api/send-messages-media`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages: [{ telefono: row['telefono'], mensaje: personalized }], waitTime: waitTime * 1000 })
+            body: singleFormData
           });
           const data = await res.json();
           if (data.success) {
@@ -284,16 +251,79 @@ function Message() {
           } else {
             notification.addResult({ telefono: row['telefono'] || '', status: 'error' });
           }
+        } catch {
+          notification.addResult({ telefono: row['telefono'] || '', status: 'error' });
+        }
+        
+        // Verificar cancelación ANTES de esperar
+        if (cancelRef.current) {
+          console.log('✋ Proceso cancelado, deteniendo espera');
+          break;
+        }
+        
+        // Solo esperar si no es el último mensaje
+        if (i < csvRows.length - 1) {
           await new Promise(res => setTimeout(res, waitTime * 1000));
         }
       }
-    } catch {
-      alert.error('Error de red al enviar mensajes');
-    } finally {
-      setSending(false);
-      notification.finish();
+    } else {
+      // Envío de texto simple
+      for (let i = 0; i < csvRows.length; i++) {
+        // Verificar cancelación ANTES de cada iteración
+        if (cancelRef.current) {
+          console.log('✋ Proceso cancelado por el usuario en mensaje', i + 1);
+          break;
+        }
+
+        const row = csvRows[i];
+        let personalized = message;
+        csvFields.forEach(f => {
+          const regex = new RegExp(`@${f}`, 'g');
+          personalized = personalized.replace(regex, row[f] || '');
+        });
+        
+        notification.update(row['telefono'] || '', i + 1);
+        
+        try {
+          const res = await fetch(`${API_URL}/api/send-messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              messages: [{ telefono: row['telefono'], mensaje: personalized }], 
+              waitTime: waitTime * 1000 
+            })
+          });
+          const data = await res.json();
+          if (data.success) {
+            notification.addResult({ telefono: row['telefono'] || '', status: 'enviado' });
+          } else {
+            notification.addResult({ telefono: row['telefono'] || '', status: 'error' });
+          }
+        } catch {
+          notification.addResult({ telefono: row['telefono'] || '', status: 'error' });
+        }
+        
+        // Verificar cancelación ANTES de esperar
+        if (cancelRef.current) {
+          console.log('✋ Proceso cancelado, deteniendo espera');
+          break;
+        }
+        
+        // Solo esperar si no es el último mensaje
+        if (i < csvRows.length - 1) {
+          await new Promise(res => setTimeout(res, waitTime * 1000));
+        }
+      }
     }
-  };
+  } catch (error) {
+    console.error('Error durante el envío:', error);
+    alert.error('Error de red al enviar mensajes');
+  } finally {
+    console.log('🏁 Finalizando proceso de mensajes');
+    setSending(false);
+    notification.finish();
+  }
+};
 
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md relative">

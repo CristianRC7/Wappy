@@ -3,7 +3,20 @@ import { useNotification } from '../context/NotificationContext';
 import * as XLSX from 'xlsx';
 
 const Notification: React.FC = () => {
-  const { sending, current, index, total, finished, results, clear, type, createdGroups } = useNotification();
+  const { 
+    sending, 
+    current, 
+    index, 
+    total, 
+    finished, 
+    results, 
+    clear, 
+    type, 
+    createdGroups,
+    cancel,
+    cancelled
+  } = useNotification();
+  
   const [showModal, setShowModal] = useState(false);
 
   const successCount = results.filter(r => r.status === 'enviado').length;
@@ -13,11 +26,16 @@ const Notification: React.FC = () => {
     if (!createdGroups.length) return;
     const headers = Object.keys(createdGroups[0]);
     const ws = XLSX.utils.json_to_sheet(createdGroups);
-    // Asegurar encabezados personalizados
     XLSX.utils.sheet_add_aoa(ws, [headers], { origin: 'A1' });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Grupos');
     XLSX.writeFile(wb, 'grupos_creados.xlsx');
+  };
+
+  const handleCancel = () => {
+    if (window.confirm('¿Estás seguro de que deseas detener el proceso? Se generará un reporte parcial con los resultados actuales.')) {
+      cancel();
+    }
   };
 
   if (!sending && !finished) return null;
@@ -26,11 +44,20 @@ const Notification: React.FC = () => {
     <>
       {/* Notificación de envío en curso */}
       {sending && (
-        <div className="fixed bottom-6 right-6 z-[100] bg-blue-700 text-white px-6 py-4 rounded-xl shadow-lg flex flex-col gap-1 min-w-[260px] animate-fade-in">
+        <div className="fixed bottom-6 right-6 z-[100] bg-blue-700 text-white px-6 py-4 rounded-xl shadow-lg flex flex-col gap-3 min-w-[280px] animate-fade-in">
           <span className="font-semibold text-lg flex items-center gap-2">
             <span>{type === 'grupo' ? 'Creando grupos...' : 'Enviando mensajes...'}</span>
-            <span className="w-5 h-5 border-4 border-white border-t-blue-300 rounded-full animate-spin inline-block"></span>
+            {!cancelled && (
+              <span className="w-5 h-5 border-4 border-white border-t-blue-300 rounded-full animate-spin inline-block"></span>
+            )}
           </span>
+          
+          {cancelled && (
+            <span className="text-sm text-yellow-300 font-semibold">
+              ⚠️ Deteniendo proceso...
+            </span>
+          )}
+          
           <span className="text-sm">
             {type === 'grupo' ? (
               <>Creando grupo: <span className="font-mono">{current || '...'}</span></>
@@ -38,21 +65,41 @@ const Notification: React.FC = () => {
               <>Enviando a: <span className="font-mono">{current || '...'}</span></>
             )}
           </span>
+          
           <span className="text-xs text-blue-100">{`Progreso: ${index} de ${total}`}</span>
+          
+          <div className="mt-2 pt-2 border-t border-blue-500">
+            <button
+              onClick={handleCancel}
+              disabled={cancelled}
+              className="w-full px-4 py-2 bg-red-500 hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition-colors cursor-pointer"
+            >
+              {cancelled ? 'Deteniendo...' : '🛑 Detener Proceso'}
+            </button>
+          </div>
         </div>
       )}
+
       {/* Notificación de resumen al finalizar */}
       {finished && (
         <div
-          className="fixed bottom-6 right-6 z-[100] bg-green-600 text-white px-6 py-4 rounded-xl shadow-lg flex flex-col gap-2 min-w-[260px] animate-fade-in cursor-pointer hover:bg-green-700"
+          className="fixed bottom-6 right-6 z-[100] bg-green-600 text-white px-6 py-4 rounded-xl shadow-lg flex flex-col gap-2 min-w-[280px] animate-fade-in cursor-pointer hover:bg-green-700"
           onClick={() => setShowModal(true)}
         >
-          <span className="font-semibold text-lg">¡{type === 'grupo' ? 'Creación de grupos' : 'Envío de mensajes'} finalizada!</span>
-          <span className="text-sm">Correctos: <span className="font-bold">{successCount}</span> / {total}</span>
+          {cancelled ? (
+            <span className="font-semibold text-lg">⚠️ Proceso detenido</span>
+          ) : (
+            <span className="font-semibold text-lg">
+              ✅ ¡{type === 'grupo' ? 'Creación de grupos' : 'Envío de mensajes'} finalizada!
+            </span>
+          )}
+          
+          <span className="text-sm">Completados: <span className="font-bold">{successCount}</span> / {total}</span>
           {errorCount > 0 && <span className="text-sm text-red-200">Errores: {errorCount}</span>}
           <span className="text-xs text-green-100">Haz clic para ver detalles</span>
         </div>
       )}
+
       {/* Modal de detalle */}
       {showModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black bg-opacity-10 backdrop-blur-sm">
@@ -62,29 +109,38 @@ const Notification: React.FC = () => {
               onClick={() => { setShowModal(false); clear(); }}
               title="Cerrar"
             >×</button>
-            <h2 className="text-2xl font-bold mb-4 text-blue-700">Resumen de {type === 'grupo' ? 'creación de grupos' : 'envío de mensajes'}</h2>
+            
+            <h2 className="text-2xl font-bold mb-4 text-blue-700">
+              {cancelled ? '⚠️ Resumen Parcial' : 'Resumen Completo'} - {type === 'grupo' ? 'Grupos' : 'Mensajes'}
+            </h2>
+            
+            {cancelled && (
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-300 rounded-lg">
+                <p className="text-yellow-800 text-sm">
+                  ⚠️ El proceso fue detenido manualmente. Los resultados mostrados son parciales.
+                </p>
+              </div>
+            )}
+            
             {type === 'grupo' && createdGroups.length > 0 && (
               <div className="mb-4 flex justify-end">
                 <button
                   className="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition-colors cursor-pointer"
                   onClick={handleDownloadExcel}
                 >
-                  Descargar Excel
+                  📥 Descargar Excel {cancelled ? '(Parcial)' : ''}
                 </button>
               </div>
             )}
+            
             <div className="max-h-80 overflow-y-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr>
                     {type === 'grupo' ? (
-                      <>
-                        <th className="py-2 px-3 border-b">Grupo</th>
-                      </>
+                      <th className="py-2 px-3 border-b">Grupo</th>
                     ) : (
-                      <>
-                        <th className="py-2 px-3 border-b">Teléfono</th>
-                      </>
+                      <th className="py-2 px-3 border-b">Teléfono</th>
                     )}
                     <th className="py-2 px-3 border-b">Estado</th>
                   </tr>
@@ -97,17 +153,22 @@ const Notification: React.FC = () => {
                       ) : (
                         <td className="py-1 px-3 font-mono text-sm">{r.telefono}</td>
                       )}
-                      <td className={`py-1 px-3 text-sm font-semibold ${r.status === 'enviado' ? 'text-green-600' : 'text-red-600'}`}>{r.status === 'enviado' ? (type === 'grupo' ? 'Creado' : 'Enviado') : 'Error'}</td>
+                      <td className={`py-1 px-3 text-sm font-semibold ${r.status === 'enviado' ? 'text-green-600' : 'text-red-600'}`}>
+                        {r.status === 'enviado' ? (type === 'grupo' ? 'Creado' : 'Enviado') : 'Error'}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+            
             <div className="mt-4 flex justify-end">
               <button
                 className="bg-blue-600 text-white px-5 py-2 rounded-lg shadow hover:bg-blue-700 transition-colors cursor-pointer"
                 onClick={() => { setShowModal(false); clear(); }}
-              >Cerrar</button>
+              >
+                Cerrar
+              </button>
             </div>
           </div>
         </div>
@@ -116,4 +177,4 @@ const Notification: React.FC = () => {
   );
 };
 
-export default Notification; 
+export default Notification;

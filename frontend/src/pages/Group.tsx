@@ -110,85 +110,123 @@ function Group() {
     if (!e.target.checked) setGroupDesc('');
   };
 
-  const handleCreateGroups = async () => {
-    if (!groupTitle || csvFields.length === 0 || csvRows.length === 0) {
-      toast.error('Debes subir un CSV válido y definir el nombre del grupo.');
-      return;
-    }
-    notification.start(csvRows.length, 'grupo');
-    const createdGroups: Array<Record<string, string>> = [];
-    // Procesar columnas de la plantilla
-    const columns = columnTemplate
-      .split(',')
-      .map(c => c.trim())
-      .filter(c => c.startsWith('@'));
-    try {
-      for (let i = 0; i < csvRows.length; i++) {
-        const row = csvRows[i];
-        // Reemplazar etiquetas en el nombre y descripción
-        let title = groupTitle;
-        let desc = groupDesc;
-        csvFields.forEach(f => {
-          const regex = new RegExp(`@${f}`, 'g');
-          title = title.replace(regex, row[f] || '');
-          if (descEnabled && desc) desc = desc.replace(regex, row[f] || '');
-        });
-        // Obtener los números de teléfono de la fila
-        const participants: string[] = [];
-        csvFields.forEach(f => {
-          if (/tel|num|fono|cel/i.test(f)) {
-            if (row[f]) participants.push(`${row[f]}@s.whatsapp.net`);
-          }
-        });
-        if (addAdmin && adminNumber) {
-          participants.push(`${adminNumber}@s.whatsapp.net`);
+const handleCreateGroups = async () => {
+  if (!groupTitle || csvFields.length === 0 || csvRows.length === 0) {
+    toast.error('Debes subir un CSV válido y definir el nombre del grupo.');
+    return;
+  }
+  
+  notification.start(csvRows.length, 'grupo');
+  const createdGroups: Array<Record<string, string>> = [];
+  
+  // Obtener la referencia de cancelación
+  const cancelRef = notification.getCancelRef();
+  
+  // Procesar columnas de la plantilla
+  const columns = columnTemplate
+    .split(',')
+    .map(c => c.trim())
+    .filter(c => c.startsWith('@'));
+  
+  try {
+    for (let i = 0; i < csvRows.length; i++) {
+      // Verificar cancelación ANTES de cada iteración
+      if (cancelRef.current) {
+        console.log('✋ Proceso cancelado por el usuario en grupo', i + 1);
+        break;
+      }
+
+      const row = csvRows[i];
+      
+      // Reemplazar etiquetas en el nombre y descripción
+      let title = groupTitle;
+      let desc = groupDesc;
+      csvFields.forEach(f => {
+        const regex = new RegExp(`@${f}`, 'g');
+        title = title.replace(regex, row[f] || '');
+        if (descEnabled && desc) desc = desc.replace(regex, row[f] || '');
+      });
+      
+      // Obtener los números de teléfono de la fila
+      const participants: string[] = [];
+      csvFields.forEach(f => {
+        if (/tel|num|fono|cel/i.test(f)) {
+          if (row[f]) participants.push(`${row[f]}@s.whatsapp.net`);
         }
-        notification.update(title, i + 1);
-        try {
-          const res = await fetch(`${API_URL}/api/create-groups`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              groupTitle: title,
-              groupDesc: desc,
-              descEnabled,
-              addAdmin,
-              adminNumber,
-              waitTime,
-              csvFields,
-              csvRows: [row],
-            }),
+      });
+      
+      if (addAdmin && adminNumber) {
+        participants.push(`${adminNumber}@s.whatsapp.net`);
+      }
+      
+      notification.update(title, i + 1);
+      
+      try {
+        const res = await fetch(`${API_URL}/api/create-groups`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            groupTitle: title,
+            groupDesc: desc,
+            descEnabled,
+            addAdmin,
+            adminNumber,
+            waitTime,
+            csvFields,
+            csvRows: [row],
+          }),
+        });
+        
+        const data = await res.json();
+        
+        if (data.success && Array.isArray(data.groups) && data.groups.length > 0) {
+          const inviteCode = data.groups[0].inviteCode;
+          const link = inviteCode ? `https://chat.whatsapp.com/${inviteCode}` : '';
+          
+          // Construir objeto para el Excel según columnas elegidas
+          const excelRow: Record<string, string> = {};
+          columns.forEach(col => {
+            const key = col.replace('@', '');
+            excelRow[key] = row[key] || '';
           });
-          const data = await res.json();
-          if (data.success && Array.isArray(data.groups) && data.groups.length > 0) {
-            const inviteCode = data.groups[0].inviteCode;
-            const link = inviteCode ? `https://chat.whatsapp.com/${inviteCode}` : '';
-            // Construir objeto para el Excel según columnas elegidas
-            const excelRow: Record<string, string> = {};
-            columns.forEach(col => {
-              const key = col.replace('@', '');
-              excelRow[key] = row[key] || '';
-            });
-            excelRow['enlace'] = link;
-            createdGroups.push(excelRow);
-            notification.addResult({ grupo: title, status: 'enviado' });
-          } else {
-            notification.addResult({ grupo: title, status: 'error' });
-          }
-        } catch {
+          excelRow['enlace'] = link;
+          createdGroups.push(excelRow);
+          
+          notification.addResult({ grupo: title, status: 'enviado' });
+        } else {
           notification.addResult({ grupo: title, status: 'error' });
         }
-        // Esperar el delay indicado
+      } catch (error) {
+        console.error(`Error creando grupo ${title}:`, error);
+        notification.addResult({ grupo: title, status: 'error' });
+      }
+      
+      // Verificar cancelación ANTES de esperar
+      if (cancelRef.current) {
+        console.log('✋ Proceso cancelado, deteniendo espera');
+        break;
+      }
+      
+      // Esperar el delay indicado solo si no es el último
+      if (i < csvRows.length - 1) {
         await new Promise(res => setTimeout(res, Math.max(Number(waitTime) || 25, 25) * 1000));
       }
-      notification.finish();
-      notification.setCreatedGroups(createdGroups);
-    } catch {
-      notification.finish();
-      toast.error('Error de red o del servidor al crear los grupos.');
     }
-  };
-
+    
+    // Guardar los grupos creados (aunque sea parcial)
+    if (createdGroups.length > 0) {
+      console.log('💾 Guardando', createdGroups.length, 'grupos creados');
+      notification.setCreatedGroups(createdGroups);
+    }
+    
+    console.log('🏁 Finalizando proceso de grupos');
+    notification.finish();
+  } catch (error) {
+    console.error('Error general en creación de grupos:', error);
+    notification.finish();
+    toast.error('Error de red o del servidor al crear los grupos.');
+  }
+};
   React.useEffect(() => {
     if (csvRows.length > 0 && csvFields.length > 0 && groupTitle) {
       const randomRow = csvRows[Math.floor(Math.random() * csvRows.length)];
