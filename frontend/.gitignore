@@ -9,6 +9,11 @@ lerna-debug.log*
 
 node_modules
 dist
+dist-electron
+build
+electron-builder-cache
+.cache
+dist-web
 dist-ssr
 *.local
 context.txt
