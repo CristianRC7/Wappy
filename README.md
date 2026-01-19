@@ -2,17 +2,194 @@
 
 <img width="3072" height="1677" alt="Image" src="https://github.com/user-attachments/assets/bfcd3cd4-60c2-4d3d-bdf6-b173589c08d4" />
 
-Sistema web para enviar mensajes masivos y gestionar grupos de WhatsApp mediante la API de Baileys. Permite autenticación con código QR, envío de mensajes personalizados desde archivos CSV/Excel con variables dinámicas, creación de grupos, y gestión de chats.
+**Wappy** es una aplicación multiplataforma para enviar mensajes masivos y gestionar grupos de WhatsApp mediante la API de Baileys. Permite autenticación con código QR, envío de mensajes personalizados desde archivos CSV/Excel con variables dinámicas, creación de grupos, y gestión de chats.
+
+## ✨ Características Principales
+
+- 🖥️ **Aplicación de Escritorio - Web**: Construida con React (para la Web) + Electron (para Windows, macOS y Linux)
+- 📱 **Autenticación WhatsApp**: Vinculación mediante código QR
+- 📧 **Mensajes Masivos**: Envío personalizado desde CSV/Excel con variables dinámicas
+- 👥 **Gestión de Grupos**: Creación automática de grupos con links de invitación
+- 💬 **Gestión de Chats**: Visualización y búsqueda de conversaciones en tiempo real
+- 📎 **Multimedia**: Soporte para imágenes, videos, documentos y audio
+- ⚡ **Configuración de Envío**: Control de tiempo de espera entre mensajes para evitar bloqueos
 
 ## 🏗️ Arquitectura del Proyecto
 
 El proyecto está dividido en dos partes principales: **Frontend (React + TypeScript)** y **Backend (Node.js + Express)**.
 
+
 ```
-whatsapp/
-├── frontend/    # Frontend - Aplicación React
-└── server/      # Backend - API Node.js + WhatsApp Integration
+wappy/
+├── frontend/              # Frontend - Aplicación React + Electron
+│   ├── src/               # Código fuente React
+│   ├── electron/          # Configuración de Electron
+│   └── package.json       # Dependencias y scripts de Electron
+├── server/                # Backend - API Node.js + WhatsApp Integration
+│   ├── index.js           # Servidor Express + Socket.io
+│   ├── routes/            # Rutas de la API
+│   └── auth_info/         # Credenciales de WhatsApp (Baileys)
+└── iniciar-proyecto.bat   # Script de inicio automático (Windows)
 ```
+
+**Stack Tecnológico**:
+- **Frontend**: React + TypeScript + Tailwind CSS + Vite
+- **Desktop**: Electron (aplicación de escritorio multiplataforma)
+- **Backend**: Node.js + Express + Socket.io
+- **WhatsApp API**: Baileys (conexión no oficial a WhatsApp)
+
+---
+
+## 🚀 Instalación y Configuración
+
+### Requisitos Previos
+
+- **Node.js** 18 o superior
+- **npm** 9 o superior
+- **Git** (opcional, para clonar el repositorio)
+
+### Opción 1: Instalación Automática con Script (Windows)
+
+La forma más fácil de iniciar el proyecto en Windows es usando el script `iniciar-proyecto.bat`:
+
+#### 1. Clonar o descargar el proyecto
+```bash
+git clone https://github.com/tu-usuario/wappy.git
+cd wappy
+```
+
+#### 2. Ejecutar el script de inicio
+```bash
+iniciar-proyecto.bat
+```
+
+#### 3. Seleccionar opción 1 - Instalar/Verificar Paquetes
+El script automáticamente:
+- ✅ Verifica la existencia de las carpetas `server` y `frontend`
+- ✅ Instala dependencias del backend
+- ✅ Instala dependencias del frontend (incluyendo Electron)
+- ✅ Verifica actualizaciones de paquetes
+
+#### 4. Seleccionar opción 2 - Iniciar Servicios
+El script:
+- ✅ Inicia el backend (Node.js en puerto 3005)
+- ✅ Inicia el frontend con Electron en modo desarrollo
+- ✅ Abre automáticamente la aplicación de escritorio
+
+**Menú del Script**:
+```
+============================================================
+                         Wappy                        
+============================================================
+
+ [1] Instalar/Verificar Paquetes
+ [2] Iniciar Servicios
+ [3] Apagar Servicios
+ [4] Salir
+============================================================
+              Author: Cristian Ramirez
+============================================================
+```
+
+### Opción 2: Instalación Manual
+
+#### 1. Instalar dependencias del Backend
+```bash
+cd server
+npm install
+```
+
+#### 2. Instalar dependencias del Frontend
+```bash
+cd frontend
+npm install
+```
+
+#### 3. Iniciar el Backend
+```bash
+cd server
+node index.js
+```
+
+#### 4. Iniciar el Frontend como sistema Web (en otra terminal)
+```bash
+cd frontend
+npm run dev
+```
+#### 5. Iniciar el Frontend como aplicación de Escritorio (en otra terminal)
+```bash
+cd frontend
+npm run electron:dev
+```
+
+
+---
+
+### 🎬 Demostración de Inicio
+
+![Proceso de inicio del proyecto](https://github.com/user-attachments/assets/6588e9f1-528b-4bd3-9bf8-0e4ebdfc03fd)
+
+*GIF mostrando el proceso completo de inicialización del backend y frontend*
+
+---
+
+## 🎯 Uso de la Aplicación
+
+### 1. Primera vez - Autenticación WhatsApp
+
+1. Ejecutar el proyecto con el script `.bat` o manualmente
+2. La aplicación se abrirá automáticamente
+3. Ir a la sección **"QR"** en el menú
+4. Escanear el código QR con tu WhatsApp (WhatsApp > Dispositivos Vinculados > Vincular dispositivo)
+5. Una vez autenticado, aparecerá un mensaje de éxito ✅
+
+![Proceso de autenticación con código QR](https://github.com/user-attachments/assets/7b7cc3b0-7833-4f96-9d4f-f7ff8c60c954)
+
+*Demostración del proceso de escaneo del código QR y autenticación exitosa*
+
+### 2. Envío de Mensajes Masivos
+
+1. Ir a la sección **"Mensajes"**
+2. Cargar un archivo CSV/Excel con las siguientes columnas mínimas:
+   ```csv
+   telefono,nombre,apellido
+   573001234567,Juan,Perez
+   573009876543,Maria,Lopez
+   ```
+3. Escribir el mensaje usando variables dinámicas:
+   ```
+   Hola {{nombre}} {{apellido}}, este es un mensaje personalizado para ti.
+   ```
+4. (Opcional) Adjuntar imagen, video o documento
+5. Configurar tiempo de espera entre mensajes (recomendado: 30 segundos)
+6. Hacer clic en **"Enviar Mensajes"**
+
+**Variables disponibles**: Cualquier columna del CSV puede usarse como `{{nombre_columna}}`
+
+<img width="1888" height="994" alt="Image" src="https://github.com/user-attachments/assets/065b44f4-64e2-49aa-9018-cc079cfb1b26" />
+
+### 3. Creación de Grupos
+
+1. Ir a la sección **"Grupos"**
+2. Cargar un archivo CSV/Excel con:
+   ```csv
+   nombre_grupo,participantes
+   "Grupo Ventas","573001234567,573009876543,573005556789"
+   "Grupo Soporte","573002223344;573007778899"
+   ```
+   > Nota: Los participantes se pueden separar con `,` o `;`
+3. Hacer clic en **"Crear Grupos"**
+4. El sistema creará los grupos y generará links de invitación
+5. Descargar el archivo Excel con los resultados y links
+
+<img width="1883" height="983" alt="Image" src="https://github.com/user-attachments/assets/06c0657c-138d-4048-bf9e-4af8995e168f" />
+
+### 4. Gestión de Chats
+
+1. Ir a la sección **"Chats"**
+2. Ver lista de conversaciones activas
+3. Usar el buscador para filtrar chats
+4. Los mensajes nuevos se actualizan en tiempo real
 
 ---
 
@@ -273,297 +450,88 @@ server/
 **Propósito**: Creación masiva de grupos de WhatsApp
 
 **Funcionalidades**:
-- Recibe array de grupos con nombre y participantes
+- Recibe array de grupos con nombres y participantes
 - Formatea números de participantes
-- Crea grupos usando API de Baileys
-- Genera código de invitación para cada grupo
-- Construye link de invitación
-- Retorna lista de grupos con sus links
-- Manejo de errores por grupo individual
+- Crea grupos usando `sock.groupCreate()`
+- Genera links de invitación con `sock.groupInviteCode()`
+- Retorna resultados con links para cada grupo
 
 **Endpoints**:
 - `POST /create-groups` - Crea grupos masivamente
-  - Body: `{ groups: [{ nombre: string, participantes: string[] }] }`
+  - Body: `{ groups: [{ name: string, participants: string[] }] }`
 
 **Proceso**:
-1. Recibe lista de grupos
+1. Recibe array de grupos
 2. Para cada grupo:
-   - Formatea números de participantes
-   - Crea el grupo con Baileys
-   - Obtiene código de invitación
-   - Genera link compartible
-   - Registra resultado con link
+   - Formatea participantes
+   - Crea el grupo
+   - Genera código de invitación
+   - Construye link de invitación
+   - Registra resultado
+
+**Formato del link**:
+```
+https://chat.whatsapp.com/{codigo_invitacion}
+```
 
 ---
 
 #### `chats.js`
-**Propósito**: Gestión y consulta de chats
+**Propósito**: Obtención de conversaciones activas
 
 **Funcionalidades**:
-- Obtiene lista de todos los chats activos
-- Filtra conversaciones individuales y grupales
-- Extrae información de contactos
-- Registra mensajes entrantes en memoria
-- Asocia mensajes recibidos con su remitente
-- Retorna historial de mensajes por número
+- Obtiene lista de chats desde Baileys `store.chats`
+- Filtra solo conversaciones personales (no grupos ni broadcasts)
+- Extrae información de contacto (nombre, número)
+- Obtiene último mensaje de cada chat
+- Retorna lista formateada de chats
 
 **Endpoints**:
-- `GET /chats` - Obtiene lista de chats
-- `GET /messages/:number` - Obtiene mensajes de un contacto
+- `GET /chats` - Retorna array de conversaciones
 
-**Funcionalidades adicionales**:
-- `registerIncomingMessage()`: Registra mensajes recibidos
-- Almacenamiento temporal de mensajes en memoria
-- Filtrado y formateo de información de chats
-
-**Exports**:
-- `router`: Router de Express con endpoints
-- `registerIncomingMessage()`: Función para registrar mensajes entrantes
-
----
-
-## 🔧 Tecnologías y Librerías
-
-### Frontend - Dependencias de Producción
-| Librería | Versión | Descripción |
-|----------|---------|-------------|
-| `react` | ^19.2.0 | Librería UI para construcción de interfaces |
-| `react-dom` | ^19.2.0 | Renderizado de React en el DOM |
-| `react-router-dom` | ^7.9.6 | Navegación y rutas en aplicaciones React |
-| `socket.io-client` | ^4.8.1 | Cliente WebSocket para comunicación en tiempo real |
-| `tailwindcss` | ^4.1.17 | Framework de CSS utility-first |
-| `@tailwindcss/vite` | ^4.1.17 | Plugin de Tailwind para Vite |
-| `lucide-react` | ^0.554.0 | Iconos SVG para React |
-| `papaparse` | ^5.5.3 | Parser de archivos CSV |
-| `xlsx` | ^0.18.5 | Lectura y escritura de archivos Excel |
-| `sweetalert2` | ^11.26.3 | Alertas y modales personalizados |
-| `sonner` | ^2.0.7 | Notificaciones toast elegantes |
-
-### Frontend - Dependencias de Desarrollo
-| Librería | Versión | Descripción |
-|----------|---------|-------------|
-| `typescript` | ~5.9.3 | Superset de JavaScript con tipado estático |
-| `vite` | ^7.2.4 | Build tool y dev server ultrarrápido |
-| `@vitejs/plugin-react` | ^5.1.1 | Plugin oficial de Vite para React |
-| `@types/react` | ^19.2.7 | Definiciones de tipos para React |
-| `@types/react-dom` | ^19.2.3 | Definiciones de tipos para React DOM |
-| `@types/papaparse` | ^5.5.0 | Definiciones de tipos para PapaParse |
-| `eslint` | ^9.39.1 | Linter para identificar patrones problemáticos |
-| `@eslint/js` | ^9.39.1 | Configuración de ESLint para JavaScript |
-| `typescript-eslint` | ^8.47.0 | Plugin de ESLint para TypeScript |
-| `eslint-plugin-react-hooks` | ^7.0.1 | Reglas de ESLint para React Hooks |
-| `eslint-plugin-react-refresh` | ^0.4.24 | Plugin de ESLint para React Fast Refresh |
-| `globals` | ^16.5.0 | Variables globales de JavaScript |
-
-### Backend - Dependencias
-| Librería | Versión | Descripción |
-|----------|---------|-------------|
-| `baileys` | 7.0.0-rc.9 | Librería para conectarse a WhatsApp Web API |
-| `express` | ^5.1.0 | Framework web minimalista para Node.js |
-| `socket.io` | ^4.8.1 | Librería WebSocket para comunicación bidireccional |
-| `socket.io-client` | ^4.8.1 | Cliente Socket.io (usado internamente) |
-| `cors` | ^2.8.5 | Middleware para habilitar CORS |
-| `http` | ^0.0.1-security | Módulo HTTP de Node.js |
-| `multer` | ^2.0.2 | Middleware para manejo de multipart/form-data (archivos) |
-| `qrcode` | ^1.5.4 | Generador de códigos QR |
-| `papaparse` | ^5.5.3 | Parser de CSV para Node.js |
-| `link-preview-js` | ^3.2.0 | Generador de previews de links |
-| `nodemon` | ^3.1.11 | Monitor de cambios para desarrollo (auto-restart)
-
----
-
-## 🚀 Instalación y Ejecución
-
-### Prerrequisitos
-- **Node.js** 18+ ([Descargar aquí](https://nodejs.org/))
-- **npm** (incluido con Node.js) o **yarn**
-
----
-
-### 📦 Instalación de Dependencias
-
-Antes de ejecutar el proyecto, instala las dependencias tanto del frontend como del backend.
-
-#### 1️⃣ Instalar dependencias del Backend
-```bash
-cd server
-npm install
-```
-
-#### 2️⃣ Instalar dependencias del Frontend
-```bash
-cd frontend
-npm install
+**Estructura de respuesta**:
+```json
+[
+  {
+    "id": "573001234567@s.whatsapp.net",
+    "name": "Juan Perez",
+    "lastMessage": "Hola, ¿cómo estás?",
+    "timestamp": 1699999999
+  }
+]
 ```
 
 ---
 
-### ▶️ Ejecución del Proyecto
+## 🔐 Seguridad y Privacidad
 
-Para que la aplicación funcione correctamente, **debes ejecutar tanto el backend como el frontend** en terminales separadas.
+### Almacenamiento de Credenciales
 
-#### 🔧 Paso 1: Iniciar el Servidor Backend
-
-Abre una terminal y ejecuta:
-
-```bash
-cd server
-node index
+Las credenciales de WhatsApp se almacenan localmente en:
+```
+server/auth_info/
 ```
 
-✅ **El servidor estará corriendo en:** `http://localhost:3005`
-
-**Salida esperada:**
-```
-Servidor corriendo en el puerto 3005
-Socket.io configurado correctamente
-```
-
----
-
-#### 🎨 Paso 2: Iniciar el Frontend
-
-Abre **otra terminal** (manteniendo el backend activo) y ejecuta:
-
-```bash
-cd frontend
-npm run dev
+**⚠️ Importante**:
+- Esta carpeta contiene datos sensibles de autenticación
+- NO compartir ni subir a repositorios públicos
+- Incluir en `.gitignore`:
+```gitignore
+# .gitignore
+server/auth_info/
 ```
 
-✅ **La aplicación estará disponible en:** `http://localhost:5173`
+### Políticas de WhatsApp
 
-**Salida esperada:**
-```
-VITE v7.2.4  ready in XXX ms
+Para evitar bloqueos o restricciones:
 
-➜  Local:   http://localhost:5173/
-➜  Network: use --host to expose
-```
-
----
-
-### 🎬 Demostración de Inicio
-
-![Proceso de inicio del proyecto](https://github.com/user-attachments/assets/6588e9f1-528b-4bd3-9bf8-0e4ebdfc03fd)
-
-*GIF mostrando el proceso completo de inicialización del backend y frontend*
-
----
-
-### 📝 Resumen de Comandos
-
-| Acción | Comando | Puerto |
-|--------|---------|--------|
-| **Backend** | `cd server && node index` | 3005 |
-| **Frontend** | `cd frontend && npm run dev` | 5173 |
-
-> **💡 Tip**: Mantén ambas terminales abiertas mientras uses la aplicación. Si cierras alguna, esa parte del sistema dejará de funcionar.
-
----
-
-### 🔄 Modo Desarrollo (Opcional)
-
-Si estás desarrollando y quieres que el backend se reinicie automáticamente al hacer cambios:
-
-```bash
-cd server
-npm run dev
-```
-
-Esto usará **nodemon** para detectar cambios y reiniciar el servidor automáticamente.
-
----
-
-## 📱 Flujo de Uso
-
-### 1. **Autenticación con WhatsApp** 🔐
-
-Al iniciar la aplicación por primera vez, debes vincular tu cuenta de WhatsApp:
-
-1. Abre la aplicación en `http://localhost:5173`
-2. Escanea el código QR con tu WhatsApp
-3. Ve a **WhatsApp > Dispositivos vinculados > Vincular un dispositivo**
-4. Escanea el código QR que aparece en la pantalla
-5. ✅ Una vez autenticado, verás el mensaje de éxito
-
-![Proceso de autenticación con código QR](https://github.com/user-attachments/assets/7b7cc3b0-7833-4f96-9d4f-f7ff8c60c954)
-
-*Demostración del proceso de escaneo del código QR y autenticación exitosa*
-
-> **📌 Nota**: La sesión se mantiene activa mientras no cierres sesión o elimines la carpeta `auth_info/`
-
----
-
-### 2. **Envío de Mensajes** 📨
-
-Una vez autenticado, puedes enviar mensajes masivos personalizados:
-
-1. Ve a la sección **"Mensajes"** en el menú
-2. Sube un archivo CSV/Excel con contactos
-   - **Obligatorio**: Columna `telefono` con código de país
-   - **Opcional**: Otras columnas para personalización (nombre, apellido, ciudad, etc.)
-3. Escribe el mensaje usando variables dinámicas
-   - Ejemplo: `Hola {{nombre}}, te escribo desde {{ciudad}}`
-   - Las variables se autocompletan según las columnas del CSV
-4. **(Opcional)** Adjunta archivos multimedia (imágenes, videos, documentos)
-5. Configura el tiempo de espera entre mensajes (recomendado: 25-30 segundos)
-6. Haz clic en **"Enviar Mensajes"**
-7. Observa el progreso en tiempo real con la barra de notificaciones
-
----
-
-### 3. **Creación de Grupos** 👥
-
-Crea múltiples grupos de WhatsApp automáticamente:
-
-1. Ve a la sección **"Grupos"** en el menú
-2. Sube un archivo CSV/Excel con la información de los grupos
-   - Columna `grupo`: Nombre del grupo (puede usar variables dinámicas)
-   - Las demás columnas serán los participantes a agregar
-3. **(Opcional)** Agrega una descripción para todos los grupos
-4. **(Opcional)** Define un usuario administrador para todos los grupos
-5. Haz clic en **"Crear Grupos"**
-6. Espera a que se procesen todos los grupos
-7. Descarga el archivo Excel con los **links de invitación** de cada grupo creado
-
----
-
-### 4. **Gestión de Chats** 💬 *(En Desarrollo)*
-
-Esta funcionalidad está en desarrollo y próximamente permitirá:
-
-- Visualizar todas tus conversaciones activas
-- Buscar contactos específicos
-- Ver mensajes recibidos en tiempo real
-- Responder mensajes desde la interfaz
----
-
-## 📝 Formato de Archivos CSV/Excel
-
-### Para Mensajes
-```csv
-telefono,nombre,apellido,ciudad
-59112345678, Vinchita, Mamen, Santa Cruz
-573001234567,Juan,Pérez,Bogotá
-573009876543,María,López,Medellín
-```
-
-### Para Grupos
-```csv
-grupo,
-Grupo Familia,
-Grupo Trabajo,
-```
-
----
-
-## ⚠️ Notas Importantes
-
-- Los archivos de autenticación se guardan en `server/auth_info/`
-- No compartir la carpeta `auth_info/` (contiene credenciales)
-- Respetar límites de WhatsApp para evitar bloqueos
-- Usar tiempos de espera prudentes entre mensajes (recomendado: 25-30 segundos)
-- Los números deben tener código de país (Ej: 57 para Colombia, 591 Bolivia)
+1. **Tiempo de espera**: Usar mínimo 25-30 segundos entre mensajes
+2. **Personalización**: Usar variables dinámicas para evitar spam
+3. **Límites diarios**: 
+   - No enviar más de 100-150 mensajes por día
+   - No crear más de 30-45 grupos por día
+4. **Números válidos**: Verificar que existan en WhatsApp antes de enviar
+5. **Contenido apropiado**: Evitar links sospechosos o contenido spam
 
 ---
 
@@ -868,17 +836,57 @@ rm -rf node_modules package-lock.json
 npm install
 ```
 
+## 📊 API Endpoints
+
+### Resumen de Endpoints
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `POST` | `/api/logout` | Cierra sesión de WhatsApp |
+| `POST` | `/api/send-messages` | Envía mensajes masivos |
+| `POST` | `/api/create-groups` | Crea grupos masivamente |
+| `GET` | `/api/chats` | Obtiene lista de conversaciones |
+
+### Socket.io Events
+
+| Evento | Dirección | Descripción |
+|--------|-----------|-------------|
+| `qr` | Server → Client | Envía código QR para escanear |
+| `authenticated` | Server → Client | Notifica autenticación exitosa |
+| `message.received` | Server → Client | Notifica nuevo mensaje recibido |
+
 ---
 
 ## 📚 Recursos Adicionales
 
 - **Documentación oficial de Baileys**: [GitHub - WhiskeySockets/Baileys](https://github.com/WhiskeySockets/Baileys)
+- **Electron Documentation**: [Electron Docs](https://www.electronjs.org/docs/latest/)
 - **Límites de WhatsApp**: [WhatsApp Business API Limits](https://developers.facebook.com/docs/whatsapp/messaging-limits)
 - **Socket.io Docs**: [Socket.io Documentation](https://socket.io/docs/v4/)
-- **React 19 Docs**: [React Documentation](https://react.dev/)
+- **React Docs**: [React Documentation](https://react.dev/)
+
+---
+
+## 🤝 Contribuciones
+
+Las contribuciones son bienvenidas. Por favor:
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+---
+
+## ⚠️ **Recomendaciones**:
+
+- Usar con cuentas de prueba primero
+- Respetar los límites de WhatsApp
+- No hacer spam
+- Usar para propósitos legítimos
 
 ---
 
 ## 📄 Licencia
 
-Este proyecto es de código abierto fue realizado por Cristian David Ramirez Callejas
+Este proyecto es de código abierto y fue realizado por **Cristian David Ramirez Callejas**.
