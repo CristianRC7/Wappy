@@ -7,6 +7,7 @@ const cors = require('cors');
 const sessionRoutes = require('./routes/session');
 const messageRoutes = require('./routes/message');
 const groupRoutes = require('./routes/group');
+const addToGroupRoutes = require('./routes/addtogroup');
 const { router: chatsRoutes, registerIncomingMessage } = require('./routes/chats');
 
 const app = express();
@@ -27,6 +28,7 @@ app.use(express.json());
 app.set('io', io);
 app.use('/api', messageRoutes);
 app.use('/api', groupRoutes);
+app.use('/api', addToGroupRoutes);
 app.use('/api', chatsRoutes);
 
 const PORT = process.env.PORT || 3005;

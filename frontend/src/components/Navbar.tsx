@@ -1,11 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
-import { QrCode, MessageCircle, Users, MessageSquare } from 'lucide-react';
+import { QrCode, MessageCircle, Users, MessageSquare, UserPlus } from 'lucide-react';
 
 const navItems = [
-  { name: 'QR', path: '/', icon: <QrCode size={22} /> },
-  { name: 'Mensajes', path: '/message', icon: <MessageCircle size={22} /> },
-  { name: 'Grupos', path: '/group', icon: <Users size={22} /> },
-  { name: 'Chats', path: '/chats', icon: <MessageSquare size={22} /> },
+  { name: 'QR',          path: '/',             icon: <QrCode      size={22} /> },
+  { name: 'Mensajes',    path: '/message',       icon: <MessageCircle size={22} /> },
+  { name: 'Grupos',      path: '/group',         icon: <Users       size={22} /> },
+  { name: 'Agregar',     path: '/add-to-group',  icon: <UserPlus    size={22} /> },
+  { name: 'Chats',       path: '/chats',         icon: <MessageSquare size={22} /> },
 ];
 
 export default function Navbar() {
@@ -20,7 +21,9 @@ export default function Navbar() {
           <li key={item.name}>
             <Link
               to={item.path}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-200 hover:bg-blue-100 hover:text-blue-700 ${location.pathname === item.path ? 'bg-blue-100 text-blue-700' : 'text-gray-700'}`}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-200 hover:bg-blue-100 hover:text-blue-700 ${
+                location.pathname === item.path ? 'bg-blue-100 text-blue-700' : 'text-gray-700'
+              }`}
             >
               {item.icon}
               <span className="hidden sm:inline">{item.name}</span>
