@@ -1,0 +1,379 @@
+{
+  "problems": [
+    {
+      "id": 1,
+      "title": "Error de Autenticación - QR no se genera",
+      "description": "El código QR no aparece en el frontend",
+      "causes": [
+        "El servidor backend no está corriendo",
+        "Socket.io no puede conectarse",
+        "El puerto 3005 está ocupado"
+      ],
+      "solutions": [
+        {
+          "type": "bash",
+          "description": "Verificar que el backend esté corriendo",
+          "code": "cd server\nnode index.js"
+        },
+        {
+          "type": "text",
+          "description": "Verificar que no haya errores en la consola y que Socket.io se conecte (Consola F12)"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Actualización de Baileys - Incompatibilidad de Versiones",
+      "description": "Baileys lanza actualizaciones frecuentes y puede haber cambios que rompan la compatibilidad",
+      "symptoms": [
+        "Error: `Cannot find module '@whiskeysockets/baileys'`",
+        "Errores de conexión con WhatsApp",
+        "Métodos o propiedades indefinidas",
+        "QR no se genera o autenticación falla"
+      ],
+      "solutions": [
+        {
+          "type": "bash",
+          "title": "Opción 1: Mantener la versión actual (Recomendado)",
+          "code": "cd server\nnpm install baileys@7.0.0-rc.9 --save-exact"
+        },
+        {
+          "type": "bash",
+          "title": "Opción 2: Actualizar a la última versión",
+          "code": "cd server\nnpm install baileys@latest"
+        },
+        {
+          "type": "text",
+          "description": "Si hay errores, revisar el changelog oficial: https://github.com/WhiskeySockets/Baileys/releases"
+        }
+      ],
+      "notes": [
+        "Estructura de mensajes modificada",
+        "Nombres de métodos cambiados (ej: `sendMessage` → `sendMsg`)",
+        "Formato de números de WhatsApp actualizado",
+        "Eventos de conexión modificados",
+        "Estructura de autenticación actualizada"
+      ],
+      "filesToCheck": [
+        "server/routes/session.js - Verificar conexión y autenticación",
+        "server/routes/message.js - Verificar `sendMessage()`",
+        "server/routes/group.js - Verificar `groupCreate()` y `groupInviteCode()`",
+        "server/routes/chats.js - Verificar `store.chats` y estructura de mensajes"
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Error: \"Cannot send messages\" o \"Not Authorized\"",
+      "description": "No se pueden enviar mensajes después de autenticar",
+      "causes": [
+        "La sesión de WhatsApp expiró",
+        "Número bloqueado por WhatsApp",
+        "WhatsApp desvinculado del celular"
+      ],
+      "solutions": [
+        {
+          "type": "bash",
+          "title": "Eliminar credenciales antiguas (Linux/Mac)",
+          "code": "cd server\nrm -rf auth_info/*"
+        },
+        {
+          "type": "bash",
+          "title": "Eliminar credenciales antiguas (Windows)",
+          "code": "cd server\nRemove-Item auth_info\\* -Recurse"
+        },
+        {
+          "type": "bash",
+          "description": "Reiniciar el servidor",
+          "code": "node index.js"
+        },
+        {
+          "type": "text",
+          "description": "Volver a escanear el QR"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Números no se envían correctamente",
+      "description": "Mensajes no llegan o error \"Invalid JID\"",
+      "causes": [
+        "Formato de número incorrecto",
+        "Falta código de país",
+        "Caracteres especiales en el número"
+      ],
+      "solutions": [
+        {
+          "type": "text",
+          "description": "Asegurarse que el formato sea: `{código_país}{número}` sin espacios ni símbolos"
+        }
+      ],
+      "examples": [
+        {
+          "country": "Colombia",
+          "correct": "573001234567",
+          "incorrect": ["+57 300 123 4567", "57-300-123-4567", "(57) 300 123 4567"]
+        },
+        {
+          "country": "México",
+          "correct": "525512345678",
+          "incorrect": ["+52 55 1234 5678"]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Archivos multimedia no se envían",
+      "description": "Imágenes/videos no se adjuntan a los mensajes",
+      "causes": [
+        "Archivo muy pesado (límite ~16MB en WhatsApp)",
+        "Formato no soportado",
+        "Error en Multer (middleware de archivos)"
+      ],
+      "solutions": [
+        {
+          "type": "bash",
+          "description": "Verificar que Multer esté instalado",
+          "code": "cd server\nnpm list multer"
+        },
+        {
+          "type": "bash",
+          "description": "Reinstalar si es necesario",
+          "code": "npm install multer@^2.0.2"
+        }
+      ],
+      "supportedFormats": {
+        "images": ["JPG", "PNG", "GIF", "WEBP"],
+        "videos": ["MP4", "3GP", "AVI", "MOV"],
+        "documents": ["PDF", "DOC", "DOCX", "XLS", "XLSX", "TXT"],
+        "audio": ["MP3", "OGG", "WAV", "AAC"]
+      }
+    },
+    {
+      "id": 6,
+      "title": "Error: \"Rate limit exceeded\" o \"Demasiados mensajes\"",
+      "description": "WhatsApp bloquea temporalmente por spam",
+      "causes": [
+        "Enviar mensajes muy rápido",
+        "Enviar el mismo mensaje a muchos contactos",
+        "Tiempo de espera muy corto entre mensajes"
+      ],
+      "solutions": [
+        {
+          "type": "text",
+          "description": "Aumentar tiempo de espera: Usar mínimo 25-30 segundos entre mensajes"
+        },
+        {
+          "type": "text",
+          "description": "Variar mensajes: Usar variables dinámicas para personalizar cada mensaje"
+        },
+        {
+          "type": "text",
+          "description": "Enviar en lotes: No enviar más de 50-100 mensajes por hora"
+        },
+        {
+          "type": "text",
+          "description": "Esperar 24h: Si hay bloqueo temporal, esperar antes de reintentar"
+        }
+      ],
+      "recommendation": {
+        "type": "code",
+        "language": "javascript",
+        "description": "En el frontend (Message.tsx), configurar:",
+        "code": "waitTime: 30  // segundos (mínimo recomendado)"
+      }
+    },
+    {
+      "id": 7,
+      "title": "Error al crear grupos - \"Participant not found\"",
+      "description": "No se puede agregar un participante al grupo",
+      "causes": [
+        "Número no está en WhatsApp",
+        "Número bloqueó al creador del grupo",
+        "Formato de número incorrecto",
+        "Privacidad del usuario no permite ser agregado"
+      ],
+      "solutions": [
+        {
+          "type": "text",
+          "description": "Verificar que todos los números existan en WhatsApp"
+        },
+        {
+          "type": "text",
+          "description": "Validar formato de números (código país + número)"
+        },
+        {
+          "type": "text",
+          "description": "Enviar mensaje individual primero antes de agregar a grupo"
+        },
+        {
+          "type": "text",
+          "description": "Revisar logs del servidor para ver qué número falló"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Frontend no se conecta al Backend",
+      "description": "Error de CORS o \"Network Error\"",
+      "causes": [
+        "Backend no está corriendo",
+        "URL del backend incorrecta",
+        "CORS no configurado"
+      ],
+      "solutions": [
+        {
+          "type": "code",
+          "language": "typescript",
+          "description": "Verificar Config.ts en el frontend",
+          "code": "const API_URL: string = 'http://localhost:3005';"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "description": "Asegurarse que el backend esté en ese puerto (server/index.js)",
+          "code": "const PORT = 3005;"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "description": "Verificar CORS en server/index.js (debe estar antes de las rutas)",
+          "code": "app.use(cors());"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "CSV/Excel no se lee correctamente",
+      "description": "Las columnas no se detectan o datos incorrectos",
+      "causes": [
+        "Codificación del archivo incorrecta",
+        "Formato CSV con separador diferente",
+        "Caracteres especiales en encabezados"
+      ],
+      "solutions": [
+        {
+          "type": "text",
+          "description": "Guardar CSV con codificación UTF-8"
+        },
+        {
+          "type": "text",
+          "description": "Usar coma `,` como separador"
+        },
+        {
+          "type": "text",
+          "description": "Encabezados sin acentos ni espacios (opcional pero recomendado)"
+        },
+        {
+          "type": "text",
+          "description": "Primera fila debe ser los nombres de columnas"
+        }
+      ],
+      "correctFormat": {
+        "type": "csv",
+        "example": "telefono,nombre,apellido\n573001234567,Juan,Perez\n573009876543,Maria,Lopez"
+      }
+    },
+    {
+      "id": 10,
+      "title": "Sesión se desconecta frecuentemente",
+      "description": "Hay que escanear QR constantemente",
+      "causes": [
+        "Carpeta `auth_info/` se elimina",
+        "Múltiples dispositivos conectados",
+        "Problemas con WhatsApp"
+      ],
+      "solutions": [
+        {
+          "type": "text",
+          "description": "No eliminar `auth_info/` a menos que sea necesario"
+        },
+        {
+          "type": "bash",
+          "description": "Agregar `auth_info/` al `.gitignore`",
+          "code": "echo \"auth_info/\" > .gitignore\necho \"node_modules/\" >> .gitignore"
+        },
+        {
+          "type": "text",
+          "description": "Desconectar otros WhatsApp Web activos"
+        },
+        {
+          "type": "text",
+          "description": "Reiniciar el celular y volver a vincular"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Error: \"Port 3005 already in use\"",
+      "description": "El puerto ya está ocupado",
+      "solutions": [
+        {
+          "type": "bash",
+          "title": "Solución en Windows - Ver qué proceso usa el puerto",
+          "code": "netstat -ano | findstr :3005"
+        },
+        {
+          "type": "bash",
+          "title": "Solución en Windows - Matar el proceso",
+          "code": "taskkill /PID <PID> /F"
+        },
+        {
+          "type": "bash",
+          "title": "Solución en Linux/Mac - Ver proceso",
+          "code": "lsof -i :3005"
+        },
+        {
+          "type": "bash",
+          "title": "Solución en Linux/Mac - Matar proceso",
+          "code": "kill -9 <PID>"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "description": "O cambiar el puerto en server/index.js",
+          "code": "const PORT = 3006; // Usar otro puerto"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Dependencias desactualizadas o conflictos",
+      "description": "Errores al instalar o ejecutar el proyecto",
+      "solutions": [
+        {
+          "type": "bash",
+          "title": "Backend - Reinstalar dependencias",
+          "code": "cd server\nrm -rf node_modules package-lock.json\nnpm install"
+        },
+        {
+          "type": "bash",
+          "title": "Frontend - Reinstalar dependencias",
+          "code": "cd frontend\nrm -rf node_modules package-lock.json\nnpm install"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Grupos no aparecen en el selector de \"Agregar\"",
+      "description": "El desplegable de grupos está vacío",
+      "causes": [
+        "No hay sesión activa de WhatsApp",
+        "El usuario no es administrador de ningún grupo"
+      ],
+      "solutions": [
+        {
+          "type": "text",
+          "description": "Verificar que el QR esté escaneado y la sesión activa"
+        },
+        {
+          "type": "text",
+          "description": "Hacer clic en el botón 'Actualizar' junto al selector"
+        },
+        {
+          "type": "text",
+          "description": "Confirmar que la cuenta tiene grupos creados o en los que es admin"
+        }
+      ]
+    }
+  ]
+}

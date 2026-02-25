@@ -5,6 +5,7 @@ import Message from './pages/Message';
 import Group from './pages/Group';
 import Chats from './pages/Chats';
 import AddToGroup from './pages/AddToGroup';
+import Troubleshooting from './pages/Troubleshooting';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/group" element={<Group />} />
           <Route path="/chats" element={<Chats />} />
           <Route path="/add-to-group" element={<AddToGroup />} />
+          <Route path="/troubleshooting" element={<Troubleshooting />} />
         </Routes>
       </div>
     </Router>
