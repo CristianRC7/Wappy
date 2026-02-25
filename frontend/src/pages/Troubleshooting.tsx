@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, ChevronDown, ChevronUp, Copy, AlertCircle, CheckCircle2, Info } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react';
 import troubleshootingData from '../data/troubleshooting-data.json';
 
 interface Solution {
@@ -69,19 +69,19 @@ const Troubleshooting = () => {
   const renderCodeBlock = (solution: Solution, index: number, problemId: number) => {
     const codeId = `${problemId}-${index}`;
     return (
-      <div className="relative bg-gray-900 rounded-lg p-4 mt-2">
+      <div className="relative bg-gray-900 rounded-lg p-4 mt-3">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-xs text-gray-400 font-mono">
+          <span className="text-xs text-gray-400 font-mono uppercase">
             {solution.language || 'bash'}
           </span>
           <button
             onClick={() => copyToClipboard(solution.code!, codeId)}
-            className="text-gray-400 hover:text-white transition-colors cursor-pointer flex items-center gap-1 text-xs"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-gray-800 hover:bg-gray-700 transition-colors text-xs text-gray-300"
           >
             {copiedCode === codeId ? (
               <>
-                <CheckCircle2 size={14} className="text-green-400" />
-                <span className="text-green-400">Copiado!</span>
+                <Check size={14} />
+                Copiado
               </>
             ) : (
               <>
@@ -99,15 +99,14 @@ const Troubleshooting = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto py-6 px-4">
+    <div className="max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-blue-700 mb-2 flex items-center gap-3">
-          <AlertCircle size={36} />
-          Solución de Problemas
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          Centro de Ayuda
         </h1>
         <p className="text-gray-600">
-          Encuentra soluciones rápidas a los problemas más comunes de Wappy
+          Encuentra soluciones a los problemas más comunes
         </p>
       </div>
 
@@ -119,65 +118,63 @@ const Troubleshooting = () => {
           placeholder="Buscar problema o solución..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
+          className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
         />
       </div>
 
       {/* Results Count */}
       {searchTerm && (
         <div className="mb-4 text-sm text-gray-600">
-          {filteredProblems.length} {filteredProblems.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}
+          {filteredProblems.length} {filteredProblems.length === 1 ? 'resultado' : 'resultados'}
         </div>
       )}
 
       {/* Problems List */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {filteredProblems.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
-            <Info size={48} className="mx-auto mb-4 text-gray-300" />
-            <p className="text-lg">No se encontraron resultados para "{searchTerm}"</p>
-            <p className="text-sm mt-2">Intenta con otros términos de búsqueda</p>
+            <p className="text-lg mb-2">No se encontraron resultados</p>
+            <p className="text-sm">Intenta con otros términos de búsqueda</p>
           </div>
         ) : (
           filteredProblems.map((problem) => (
             <div
               key={problem.id}
-              className="border-2 border-gray-200 rounded-lg overflow-hidden transition-all hover:shadow-lg"
+              className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
             >
               {/* Problem Header */}
               <div
                 onClick={() => toggleExpand(problem.id)}
-                className="p-4 bg-white cursor-pointer flex justify-between items-center hover:bg-gray-50 transition-colors"
+                className="p-5 cursor-pointer flex justify-between items-start hover:bg-gray-50 transition-colors"
               >
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">
                     {problem.id}. {problem.title}
                   </h3>
                   <p className="text-sm text-gray-600">{problem.description}</p>
                 </div>
-                <div className="ml-4">
+                <div className="ml-4 flex-shrink-0">
                   {expandedId === problem.id ? (
-                    <ChevronUp className="text-blue-600" size={24} />
+                    <ChevronUp className="text-gray-400" size={20} />
                   ) : (
-                    <ChevronDown className="text-gray-400" size={24} />
+                    <ChevronDown className="text-gray-400" size={20} />
                   )}
                 </div>
               </div>
 
               {/* Problem Details */}
               {expandedId === problem.id && (
-                <div className="p-6 bg-gray-50 border-t-2 border-gray-200">
+                <div className="px-5 pb-5 pt-2 space-y-5 border-t border-gray-100">
                   {/* Causes */}
                   {problem.causes && problem.causes.length > 0 && (
-                    <div className="mb-6">
-                      <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                        <AlertCircle size={18} className="text-orange-500" />
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-3 text-sm">
                         Causas Posibles
                       </h4>
                       <ul className="space-y-2">
                         {problem.causes.map((cause, idx) => (
-                          <li key={idx} className="flex items-start gap-2 text-gray-700">
-                            <span className="text-orange-500 mt-1">•</span>
+                          <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
+                            <span className="text-emerald-600 mt-0.5">•</span>
                             <span>{cause}</span>
                           </li>
                         ))}
@@ -187,16 +184,16 @@ const Troubleshooting = () => {
 
                   {/* Symptoms */}
                   {problem.symptoms && problem.symptoms.length > 0 && (
-                    <div className="mb-6">
-                      <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                        <Info size={18} className="text-blue-500" />
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-3 text-sm">
                         Síntomas
                       </h4>
                       <ul className="space-y-2">
                         {problem.symptoms.map((symptom, idx) => (
-                          <li key={idx} className="flex items-start gap-2 text-gray-700">
-                            <span className="text-blue-500 mt-1">•</span>
-                            <span className="font-mono text-sm bg-blue-50 px-2 py-1 rounded">{symptom}</span>
+                          <li key={idx} className="text-sm">
+                            <code className="bg-gray-100 px-2 py-1 rounded text-gray-800">
+                              {symptom}
+                            </code>
                           </li>
                         ))}
                       </ul>
@@ -205,19 +202,20 @@ const Troubleshooting = () => {
 
                   {/* Solutions */}
                   {problem.solutions && problem.solutions.length > 0 && (
-                    <div className="mb-6">
-                      <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                        <CheckCircle2 size={18} className="text-green-500" />
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-3 text-sm">
                         Soluciones
                       </h4>
-                      <div className="space-y-4">
+                      <div className="space-y-3">
                         {problem.solutions.map((solution, idx) => (
-                          <div key={idx} className="bg-white p-4 rounded-lg border border-gray-200">
+                          <div key={idx} className="bg-gray-50 p-4 rounded-lg">
                             {solution.title && (
-                              <h5 className="font-semibold text-gray-800 mb-2">{solution.title}</h5>
+                              <h5 className="font-medium text-gray-900 mb-2 text-sm">
+                                {solution.title}
+                              </h5>
                             )}
                             {solution.description && (
-                              <p className="text-gray-700 mb-2">{solution.description}</p>
+                              <p className="text-sm text-gray-700 mb-2">{solution.description}</p>
                             )}
                             {solution.code && renderCodeBlock(solution, idx, problem.id)}
                           </div>
@@ -228,12 +226,14 @@ const Troubleshooting = () => {
 
                   {/* Notes */}
                   {problem.notes && problem.notes.length > 0 && (
-                    <div className="mb-6">
-                      <h4 className="font-semibold text-gray-800 mb-3">Notas Importantes</h4>
-                      <ul className="space-y-2 bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                    <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                      <h4 className="font-semibold text-gray-900 mb-3 text-sm">
+                        Notas Importantes
+                      </h4>
+                      <ul className="space-y-2">
                         {problem.notes.map((note, idx) => (
-                          <li key={idx} className="flex items-start gap-2 text-gray-700">
-                            <span className="text-yellow-600 mt-1">⚠️</span>
+                          <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
+                            <span className="text-yellow-600">⚠</span>
                             <span>{note}</span>
                           </li>
                         ))}
@@ -243,11 +243,13 @@ const Troubleshooting = () => {
 
                   {/* Files to Check */}
                   {problem.filesToCheck && problem.filesToCheck.length > 0 && (
-                    <div className="mb-6">
-                      <h4 className="font-semibold text-gray-800 mb-3">Archivos a Revisar</h4>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-3 text-sm">
+                        Archivos a Revisar
+                      </h4>
                       <ul className="space-y-2">
                         {problem.filesToCheck.map((file, idx) => (
-                          <li key={idx} className="font-mono text-sm bg-purple-50 px-3 py-2 rounded border-l-4 border-purple-400">
+                          <li key={idx} className="text-sm font-mono bg-gray-100 px-3 py-2 rounded">
                             {file}
                           </li>
                         ))}
@@ -257,23 +259,29 @@ const Troubleshooting = () => {
 
                   {/* Examples */}
                   {problem.examples && problem.examples.length > 0 && (
-                    <div className="mb-6">
-                      <h4 className="font-semibold text-gray-800 mb-3">Ejemplos de Formato</h4>
-                      <div className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-3 text-sm">
+                        Ejemplos de Formato
+                      </h4>
+                      <div className="space-y-3">
                         {problem.examples.map((example, idx) => (
-                          <div key={idx} className="bg-white p-4 rounded-lg border border-gray-200">
-                            <h5 className="font-semibold text-gray-700 mb-2">{example.country}</h5>
+                          <div key={idx} className="space-y-2">
+                            <p className="font-medium text-sm text-gray-700">{example.country}</p>
                             <div className="space-y-2">
-                              <div className="flex items-center gap-2">
-                                <CheckCircle2 size={16} className="text-green-500" />
-                                <span className="font-mono text-sm bg-green-50 px-2 py-1 rounded">{example.correct}</span>
-                                <span className="text-xs text-green-600 font-semibold">Correcto</span>
+                              <div className="flex items-center gap-2 text-sm">
+                                <span className="text-green-600">✓</span>
+                                <code className="bg-green-50 px-2 py-1 rounded text-green-800">
+                                  {example.correct}
+                                </code>
+                                <span className="text-xs text-green-600">Correcto</span>
                               </div>
                               {example.incorrect.map((inc, i) => (
-                                <div key={i} className="flex items-center gap-2">
-                                  <AlertCircle size={16} className="text-red-500" />
-                                  <span className="font-mono text-sm bg-red-50 px-2 py-1 rounded">{inc}</span>
-                                  <span className="text-xs text-red-600 font-semibold">Incorrecto</span>
+                                <div key={i} className="flex items-center gap-2 text-sm">
+                                  <span className="text-red-600">✗</span>
+                                  <code className="bg-red-50 px-2 py-1 rounded text-red-800 line-through">
+                                    {inc}
+                                  </code>
+                                  <span className="text-xs text-red-600">Incorrecto</span>
                                 </div>
                               ))}
                             </div>
@@ -285,15 +293,22 @@ const Troubleshooting = () => {
 
                   {/* Supported Formats */}
                   {problem.supportedFormats && (
-                    <div className="mb-6">
-                      <h4 className="font-semibold text-gray-800 mb-3">Formatos Soportados</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-3 text-sm">
+                        Formatos Soportados
+                      </h4>
+                      <div className="grid grid-cols-2 gap-3">
                         {Object.entries(problem.supportedFormats).map(([key, formats]) => (
-                          <div key={key} className="bg-white p-3 rounded-lg border border-gray-200">
-                            <h5 className="font-semibold text-gray-700 mb-2 capitalize">{key}</h5>
-                            <div className="flex flex-wrap gap-2">
+                          <div key={key} className="bg-gray-50 p-3 rounded-lg">
+                            <h5 className="font-medium text-xs text-gray-700 mb-2 capitalize">
+                              {key}
+                            </h5>
+                            <div className="flex flex-wrap gap-1.5">
                               {(formats as string[]).map((format, idx) => (
-                                <span key={idx} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-mono">
+                                <span
+                                  key={idx}
+                                  className="text-xs bg-white px-2 py-1 rounded border border-gray-200"
+                                >
                                   {format}
                                 </span>
                               ))}
@@ -306,30 +321,32 @@ const Troubleshooting = () => {
 
                   {/* Recommendation */}
                   {problem.recommendation && (
-                    <div className="mb-6">
-                      <h4 className="font-semibold text-gray-800 mb-3">Recomendación</h4>
-                      <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
-                        <p className="text-gray-700 mb-2">{problem.recommendation.description}</p>
-                        {problem.recommendation.code && (
-                          <div className="relative bg-gray-900 rounded-lg p-4 mt-2">
-                            <pre className="text-sm text-gray-100 overflow-x-auto">
-                              <code>{problem.recommendation.code}</code>
-                            </pre>
-                          </div>
-                        )}
-                      </div>
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <h4 className="font-semibold text-gray-900 mb-2 text-sm">
+                        Recomendación
+                      </h4>
+                      <p className="text-sm text-gray-700 mb-2">
+                        {problem.recommendation.description}
+                      </p>
+                      {problem.recommendation.code && (
+                        <div className="bg-gray-900 rounded p-3 mt-2">
+                          <pre className="text-sm text-gray-100 overflow-x-auto">
+                            <code>{problem.recommendation.code}</code>
+                          </pre>
+                        </div>
+                      )}
                     </div>
                   )}
 
                   {/* Correct Format */}
                   {problem.correctFormat && (
-                    <div className="mb-6">
-                      <h4 className="font-semibold text-gray-800 mb-3">Formato Correcto</h4>
-                      <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                        <pre className="text-sm text-gray-800 overflow-x-auto font-mono">
-                          {problem.correctFormat.example}
-                        </pre>
-                      </div>
+                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                      <h4 className="font-semibold text-gray-900 mb-3 text-sm">
+                        Formato Correcto
+                      </h4>
+                      <pre className="text-sm text-gray-800 overflow-x-auto font-mono bg-white p-3 rounded">
+                        {problem.correctFormat.example}
+                      </pre>
                     </div>
                   )}
                 </div>
