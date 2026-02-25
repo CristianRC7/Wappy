@@ -184,7 +184,24 @@ npm run electron:dev
 
 <img width="1883" height="983" alt="Image" src="https://github.com/user-attachments/assets/06c0657c-138d-4048-bf9e-4af8995e168f" />
 
-### 4. Gestión de Chats
+### 4. Agregar Participantes a un Grupo
+
+1. Ir a la sección **"Agregar"**
+2. Seleccionar el grupo destino del desplegable (se carga automáticamente desde WhatsApp)
+3. Cargar un archivo CSV con el siguiente formato:
+   ```csv
+   telefono,admin
+   591701234567,true
+   591709876543,false
+   591703334455,
+   ```
+   - `telefono` — **obligatoria**: número con código de país, sin `+` ni espacios
+   - `admin` — **opcional**: `true` para promover como administrador, vacío o `false` para no hacerlo
+4. Configurar el tiempo de espera entre adiciones (mínimo 25 segundos)
+5. Hacer clic en **"Agregar al grupo"**
+6. Al finalizar, el modal de resumen muestra el estado por número y permite descargar el reporte en Excel
+
+### 5. Gestión de Chats
 
 1. Ir a la sección **"Chats"**
 2. Ver lista de conversaciones activas
@@ -240,30 +257,36 @@ src/
 ```
 components/
 ├── Navbar.tsx                # Barra de navegación principal
-├── Notification.tsx          # Sistema de notificaciones de progreso
-└── Alert.tsx                 # Componente de alertas (SweetAlert2)
+├── Notification.tsx          # Sistema global de notificaciones y modal de resultados
+└── Alert.tsx                 # Componente de alertas toast (Sonner)
 ```
 
 #### `Navbar.tsx`
 - **Propósito**: Barra de navegación de la aplicación
 - **Funcionalidad**:
-  - Navegación entre secciones (QR, Mensajes, Grupos, Chats)
+  - Navegación entre secciones (QR, Mensajes, Grupos, Agregar, Chats)
   - Resalta la página activa
   - Diseño responsivo con Tailwind CSS
 
 #### `Notification.tsx`
-- **Propósito**: Muestra el progreso de envío de mensajes y creación de grupos
+- **Propósito**: Sistema global de notificaciones de progreso y modal de resultados
 - **Funcionalidad**:
-  - Indicador de progreso en tiempo real
-  - Modal con resumen de resultados (éxitos/errores)
-  - Exportación de resultados a Excel
-  - Muestra links de grupos creados
+  - Toast flotante en tiempo real con progreso actual (`X de Y`)
+  - Botón para detener el proceso en curso con confirmación
+  - Toast de resumen al finalizar (clicable para abrir el modal)
+  - Modal con tabla de resultados individuales por tipo de operación:
+    - **Mensajes**: teléfono + estado (Enviado / Error)
+    - **Grupos**: nombre del grupo + estado (Creado / Error)
+    - **Agregar**: teléfono + estado + columna de admin con ícono de escudo si fue promovido + motivo del error si aplica
+  - Botón "📥 Descargar Excel" disponible en el modal para grupos creados y adiciones al grupo
+  - Fondo con efecto blur (`backdrop-blur-md`) al abrir el modal
+  - Soporta procesos cancelados mostrando resumen parcial
 
 #### `Alert.tsx`
-- **Propósito**: Utilidad para mostrar alertas personalizadas
+- **Propósito**: Utilidad para mostrar alertas tipo toast
 - **Funcionalidad**:
-  - Wrapper de SweetAlert2 para alertas consistentes
-  - Métodos para éxito, error, advertencia y confirmación
+  - Wrapper de Sonner para alertas consistentes en toda la app
+  - Métodos: `alert.error()`, `alert.success()`, `alert.warning()`, `alert.info()`
 
 ---
 
@@ -274,7 +297,8 @@ pages/
 ├── Qr.tsx                    # Página de autenticación con QR de WhatsApp
 ├── Message.tsx               # Página de envío de mensajes masivos
 ├── Group.tsx                 # Página de creación de grupos
-└── Chats.tsx                 # Página de gestión de chats
+├── AddToGroup.tsx            # Página de adición masiva de participantes a grupos
+└── Chats.tsx                 # Página de gestión de chats en tiempo real
 ```
 
 #### `Qr.tsx`
@@ -306,6 +330,17 @@ pages/
   - Generación de links de invitación
   - Descarga de resultados con links en Excel
 
+#### `AddToGroup.tsx`
+- **Propósito**: Adición masiva de participantes a un grupo existente
+- **Funcionalidad**:
+  - Carga la lista de grupos del WhatsApp vinculado desde la API
+  - Selector de grupo destino con contador de miembros actuales
+  - Botón de actualizar para recargar la lista de grupos
+  - Carga de CSV con columnas `telefono` (obligatoria) y `admin` (opcional)
+  - Detecta automáticamente si el CSV tiene columna `admin` y muestra el conteo de admins a promover
+  - Cancela el proceso en cualquier momento manteniendo el reporte parcial
+  - Integrado con el sistema global de notificaciones (progreso persistente al cambiar de página)
+
 #### `Chats.tsx`
 - **Propósito**: Gestión y visualización de conversaciones
 - **Funcionalidad**:
@@ -332,25 +367,28 @@ context/
   - `setIsAuthenticated`: Actualiza el estado de autenticación
 
 #### `NotificationContext.tsx`
-- **Propósito**: Gestión del estado de notificaciones de envío
+- **Propósito**: Gestión global del estado de operaciones en progreso (mensajes, grupos, adiciones)
 - **Estado**:
-  - `sending`: Boolean, indica si hay un envío en progreso
-  - `current`: Contacto/grupo actual procesándose
-  - `index`: Índice actual del procesamiento
-  - `total`: Total de elementos a procesar
-  - `results`: Array con resultados (éxito/error)
-  - `finished`: Boolean, indica si el proceso terminó
-  - `type`: Tipo de operación ('mensaje' | 'grupo')
-  - `loading`: Estado de carga
-  - `createdGroups`: Array de grupos creados con sus links
+  - `sending`: Boolean, indica si hay una operación en progreso
+  - `finished`: Boolean, indica si la operación terminó
+  - `cancelled`: Boolean, indica si fue detenida manualmente
+  - `current`: Elemento actual procesándose (teléfono o nombre de grupo)
+  - `index` / `total`: Progreso actual y total de elementos
+  - `type`: Tipo de operación — `'mensaje'` | `'grupo'` | `'agregar'`
+  - `results`: Array con resultados simplificados `{ telefono?, grupo?, status }`
+  - `addedResults`: Array con resultados detallados de adiciones `{ telefono, status, reason, makeAdmin, adminStatus }`
+  - `createdGroups`: Array de grupos creados con sus datos para el Excel
+  - `loading`: Estado de carga general
 - **Funciones**:
-  - `start()`: Inicia un proceso de envío
-  - `update()`: Actualiza el progreso
-  - `addResult()`: Agrega un resultado
-  - `finish()`: Finaliza el proceso
-  - `clear()`: Limpia el estado
-  - `setLoading()`: Actualiza estado de carga
-  - `setCreatedGroups()`: Guarda grupos creados
+  - `start(total, type)`: Inicia una operación
+  - `update(current, index)`: Actualiza el progreso
+  - `addResult(data)`: Registra el resultado de un elemento
+  - `finish()`: Marca la operación como finalizada
+  - `cancel()`: Solicita la cancelación del proceso
+  - `clear()`: Limpia todo el estado
+  - `getCancelRef()`: Devuelve la `ref` compartida para cancelación sin re-renders
+  - `setCreatedGroups(groups)`: Guarda los grupos creados para el Excel
+  - `setAddedResults(results)`: Guarda los resultados detallados de adición para el Excel
 
 ---
 
@@ -365,9 +403,10 @@ server/
 ├── auth_info/                 # Credenciales y estado de WhatsApp (Baileys)
 └── routes/                    # Rutas de la API
     ├── session.js             # Gestión de sesión y QR
-    ├── message.js             # Envío de mensajes
+    ├── message.js             # Envío de mensajes (texto y multimedia)
     ├── group.js               # Creación de grupos
-    └── chats.js               # Obtención de chats
+    ├── addtogroup.js          # Adición de participantes a grupos existentes
+    └── chats.js               # Gestión de chats en tiempo real
 ```
 
 ---
@@ -432,9 +471,34 @@ server/
 - Retorna resultados individuales (éxito/error)
 
 **Endpoints**:
-- `POST /send-messages` - Envía mensajes masivos
-  - Body: `{ contacts: [...], message: string, waitTime: number, media?: file }`
 
+`POST /api/send-messages`
+```json
+// Request
+{
+  "messages": [
+    { "telefono": "591701234567", "mensaje": "Hola Juan, bienvenido." }
+  ],
+  "waitTime": 25000
+}
+
+// Response
+{
+  "success": true,
+  "results": [
+    { "telefono": "591701234567", "success": true, "messageId": "ABCD1234" }
+  ],
+  "totalSent": 1,
+  "totalFailed": 0
+}
+```
+
+`POST /api/send-messages-media` *(multipart/form-data)*
+- Campo `media`: archivo de imagen, video o audio (máx. 50MB)
+- Campo `data`: JSON con `{ messages: [...], waitTime: number }`
+- El mensaje se envía como `caption` para imágenes y videos; los audios se envían sin caption
+
+---
 **Proceso**:
 1. Recibe lista de contactos y mensaje plantilla
 2. Para cada contacto:
@@ -457,8 +521,37 @@ server/
 - Retorna resultados con links para cada grupo
 
 **Endpoints**:
-- `POST /create-groups` - Crea grupos masivamente
-  - Body: `{ groups: [{ name: string, participants: string[] }] }`
+
+`POST /api/create-groups`
+```json
+// Request
+{
+  "groupTitle": "Equipo @ciudad",
+  "groupDesc": "Grupo oficial de @ciudad",
+  "descEnabled": true,
+  "addAdmin": true,
+  "adminNumber": "591700000000",
+  "waitTime": 30,
+  "csvFields": ["nombre", "ciudad", "telefono"],
+  "csvRows": [
+    { "nombre": "Juan", "ciudad": "Santa Cruz", "telefono": "591701234567" }
+  ]
+}
+
+// Response
+{
+  "success": true,
+  "groups": [
+    {
+      "groupId": "120363XXXXXXXXXX@g.us",
+      "title": "Equipo Santa Cruz",
+      "inviteCode": "XXXXXXXXXXXXXXXX"
+    }
+  ]
+}
+```
+
+El link de invitación se construye como `https://chat.whatsapp.com/{inviteCode}`.
 
 **Proceso**:
 1. Recibe array de grupos
@@ -469,12 +562,74 @@ server/
    - Construye link de invitación
    - Registra resultado
 
-**Formato del link**:
-```
-https://chat.whatsapp.com/{codigo_invitacion}
+---
+
+
+#### `addtogroup.js`
+**Propósito**: Adición de participantes a un grupo existente, con soporte para promover administradores
+
+**Endpoints**:
+
+`GET /api/groups`
+```json
+// Response — lista de grupos del WhatsApp vinculado, ordenada alfabéticamente
+[
+  { "id": "120363XXXXXXXXXX@g.us", "name": "Equipo Ventas", "participantsCount": 12 },
+  { "id": "120363YYYYYYYYYY@g.us", "name": "Soporte Clientes", "participantsCount": 5 }
+]
 ```
 
+`POST /api/add-to-group`
+```json
+// Request
+{
+  "groupId": "120363XXXXXXXXXX@g.us",
+  "phones": [
+    { "telefono": "591701234567", "makeAdmin": true },
+    { "telefono": "591709876543", "makeAdmin": false }
+  ],
+  "waitTime": 25
+}
+
+// Response
+{
+  "success": true,
+  "results": [
+    {
+      "telefono": "591701234567",
+      "status": "agregado",
+      "reason": "Agregado exitosamente",
+      "makeAdmin": true,
+      "adminStatus": "promovido"
+    },
+    {
+      "telefono": "591709876543",
+      "status": "error",
+      "reason": "El número no existe en WhatsApp",
+      "makeAdmin": false,
+      "adminStatus": "no_agregado"
+    }
+  ]
+}
+```
+
+**Valores de `status`**: `"agregado"` | `"error"`
+
+**Valores de `adminStatus`**:
+- `"promovido"` — fue agregado y promovido como administrador exitosamente
+- `"error_al_promover"` — fue agregado pero falló la promoción a admin
+- `"no_agregado"` — no se intentó promover porque la adición falló
+- `null` — `makeAdmin` era `false`, no se intentó promoción
+
+**Formato de la columna `admin` en el CSV**:
+
+| Valor en CSV | Interpretación |
+|---|---|
+| `true`, `1`, `yes`, `si`, `sí` | Se promueve como admin |
+| `false`, `0`, vacío | No se promueve |
+
 ---
+
 
 #### `chats.js`
 **Propósito**: Obtención de conversaciones activas
@@ -486,20 +641,34 @@ https://chat.whatsapp.com/{codigo_invitacion}
 - Obtiene último mensaje de cada chat
 - Retorna lista formateada de chats
 
-**Endpoints**:
-- `GET /chats` - Retorna array de conversaciones
-
-**Estructura de respuesta**:
+`GET /api/chats`
 ```json
+// Response
 [
-  {
-    "id": "573001234567@s.whatsapp.net",
-    "name": "Juan Perez",
-    "lastMessage": "Hola, ¿cómo estás?",
-    "timestamp": 1699999999
-  }
+  { "number": "591701234567", "messages": [] },
+  { "number": "591709876543", "messages": [] }
 ]
 ```
+
+`GET /api/chats/:number`
+```json
+// Response — historial de mensajes del número
+[
+  { "fromMe": false, "text": "Hola, ¿cómo están?", "timestamp": 1700000000000 },
+  { "fromMe": true,  "text": "¡Todo bien, gracias!", "timestamp": 1700000005000 }
+]
+```
+
+`POST /api/chats/:number`
+```json
+// Request
+{ "message": "Hola, te escribimos de Wappy." }
+
+// Response
+{ "success": true }
+```
+
+Los mensajes recibidos se registran automáticamente desde el listener de Baileys en `index.js` y se emiten vía Socket.io con el evento `new-message`.
 
 ---
 
@@ -836,24 +1005,48 @@ rm -rf node_modules package-lock.json
 npm install
 ```
 
+---
+
+### 13. **Grupos no aparecen en el selector de "Agregar"**
+
+**Problema**: El desplegable de grupos está vacío
+
+**Causas**:
+- No hay sesión activa de WhatsApp
+- El usuario no es administrador de ningún grupo
+
+**Solución**:
+- Verificar que el QR esté escaneado y la sesión activa
+- Hacer clic en el botón **"Actualizar"** junto al selector
+- Confirmar que la cuenta tiene grupos creados o en los que es admin
+
+---
+
 ## 📊 API Endpoints
 
-### Resumen de Endpoints
+
+## Resumen de API Endpoints
 
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| `POST` | `/api/logout` | Cierra sesión de WhatsApp |
-| `POST` | `/api/send-messages` | Envía mensajes masivos |
-| `POST` | `/api/create-groups` | Crea grupos masivamente |
-| `GET` | `/api/chats` | Obtiene lista de conversaciones |
+| `GET` | `/api/groups` | Lista los grupos del WhatsApp vinculado |
+| `POST` | `/api/add-to-group` | Agrega participantes a un grupo existente |
+| `POST` | `/api/send-messages` | Envía mensajes de texto masivos |
+| `POST` | `/api/send-messages-media` | Envía mensajes con archivo multimedia |
+| `POST` | `/api/create-groups` | Crea grupos masivamente desde CSV |
+| `GET` | `/api/chats` | Obtiene lista de conversaciones activas |
+| `GET` | `/api/chats/:number` | Obtiene mensajes de una conversación |
+| `POST` | `/api/chats/:number` | Envía un mensaje a un número |
 
 ### Socket.io Events
 
 | Evento | Dirección | Descripción |
 |--------|-----------|-------------|
-| `qr` | Server → Client | Envía código QR para escanear |
+| `qr` | Server → Client | Envía código QR en base64 para escanear |
 | `authenticated` | Server → Client | Notifica autenticación exitosa |
-| `message.received` | Server → Client | Notifica nuevo mensaje recibido |
+| `logout` | Server → Client | Notifica cierre de sesión |
+| `logout` | Client → Server | Solicita cerrar sesión |
+| `new-message` | Server → Client | Notifica mensaje entrante en tiempo real |
 
 ---
 
