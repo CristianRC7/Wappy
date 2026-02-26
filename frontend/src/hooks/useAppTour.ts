@@ -249,7 +249,6 @@ export const useAppTour = () => {
       onDestroyStarted: () => { driverObj.destroy(); },
       onDestroyed:      () => { navigate('/tutorials'); },
       steps: [
-        // Paso 1 — Intro
         {
           popover: {
             title: '👥 Agregar Contactos a un Grupo',
@@ -257,7 +256,6 @@ export const useAppTour = () => {
           },
           onHighlighted: () => navigate('/add-to-group'),
         },
-        // Paso 2 — Título
         {
           element: '#atg-title',
           popover: {
@@ -268,7 +266,6 @@ export const useAppTour = () => {
           },
           onHighlighted: () => navigate('/add-to-group'),
         },
-        // Paso 3 — Selector de grupo
         {
           element: '#atg-group-selector',
           popover: {
@@ -278,7 +275,6 @@ export const useAppTour = () => {
             align: 'start',
           },
         },
-        // Paso 4 — Info del CSV
         {
           element: '#atg-csv-info',
           popover: {
@@ -288,7 +284,6 @@ export const useAppTour = () => {
             align: 'start',
           },
         },
-        // Paso 5 — Upload CSV
         {
           element: '#atg-csv-upload',
           popover: {
@@ -298,7 +293,6 @@ export const useAppTour = () => {
             align: 'start',
           },
         },
-        // Paso 6 — Tiempo de espera
         {
           element: '#atg-wait-time',
           popover: {
@@ -308,14 +302,12 @@ export const useAppTour = () => {
             align: 'start',
           },
         },
-        // Paso 7 — Nota sobre admins
         {
           popover: {
             title: '🛡️ Columna Admin (opcional)',
             description: 'Si incluyes la columna "admin" en tu CSV, puedes promover contactos específicos. Ejemplo: si la fila tiene admin=true, ese contacto será agregado y luego promovido a administrador del grupo automáticamente.',
           },
         },
-        // Paso 8 — Listo
         {
           popover: {
             title: '🚀 ¡Listo para Agregar!',
@@ -328,5 +320,114 @@ export const useAppTour = () => {
     driverObj.drive();
   };
 
-  return { startTour, startMessageTour, startAddToGroupTour };
+  // ─────────────────────────────────────────────────────────────────────────
+  // Tour 4 — Cómo crear grupos masivamente
+  // ─────────────────────────────────────────────────────────────────────────
+  const startGroupTour = () => {
+    const driverObj = driver({
+      showProgress: true,
+      showButtons: ['next', 'previous', 'close'],
+      progressText: '{{current}} de {{total}}',
+      nextBtnText: 'Siguiente →',
+      prevBtnText: '← Anterior',
+      doneBtnText: '¡Entendido!',
+      popoverClass: 'driverjs-theme',
+      animate: true,
+      smoothScroll: true,
+      onDestroyStarted: () => { driverObj.destroy(); },
+      onDestroyed:      () => { navigate('/tutorials'); },
+      steps: [
+        {
+          popover: {
+            title: '🏗️ Crear Grupos Masivamente',
+            description: 'Te enseñaré cómo crear múltiples grupos de WhatsApp a la vez usando un CSV. Cada fila del CSV genera un grupo distinto con su propio nombre y participantes.',
+          },
+          onHighlighted: () => navigate('/group'),
+        },
+        {
+          element: '#grp-title',
+          popover: {
+            title: 'Sección Crear Grupos',
+            description: 'Desde aquí configuras todo: el CSV con los datos, el nombre de cada grupo, descripción, administrador y el tiempo entre creaciones.',
+            side: 'bottom',
+            align: 'start',
+          },
+          onHighlighted: () => navigate('/group'),
+        },
+        {
+          element: '#grp-csv-upload',
+          popover: {
+            title: '📂 Sube tu Archivo CSV',
+            description: 'El CSV es la base de todo. Cada fila crea un grupo diferente. Debe incluir columnas con los teléfonos de los participantes (columnas que contengan "tel", "num", "fono" o "cel" se detectan automáticamente).',
+            side: 'bottom',
+            align: 'start',
+          },
+        },
+        {
+          element: '#grp-title-input',
+          popover: {
+            title: '✏️ Nombre del Grupo',
+            description: 'Define el nombre para todos los grupos. Puedes usar etiquetas @columna para personalizarlo con los datos de cada fila del CSV. Ejemplo: "Equipo @ciudad - @empresa" generará nombres únicos por fila.',
+            side: 'bottom',
+            align: 'start',
+          },
+        },
+        {
+          element: '#grp-desc',
+          popover: {
+            title: '📝 Descripción (opcional)',
+            description: 'Activa el checkbox para agregar una descripción a todos los grupos. También soporta etiquetas @columna para personalizar el texto con los datos de cada fila.',
+            side: 'bottom',
+            align: 'start',
+          },
+        },
+        {
+          element: '#grp-admin',
+          popover: {
+            title: '🛡️ Administrador Fijo (opcional)',
+            description: 'Si activas esta opción, ese número será agregado como administrador en todos los grupos creados. Útil para mantener control centralizado.',
+            side: 'top',
+            align: 'start',
+          },
+        },
+        {
+          element: '#grp-columns',
+          popover: {
+            title: '📊 Columnas del Excel de Resultados',
+            description: 'Indica qué columnas del CSV quieres incluir en el archivo Excel de resultados. Usa etiquetas @columna separadas por coma. El enlace de invitación se agrega automáticamente.',
+            side: 'top',
+            align: 'start',
+          },
+        },
+        {
+          element: '#grp-wait-time',
+          popover: {
+            title: '⏱️ Tiempo de Espera',
+            description: 'Segundos de pausa entre la creación de cada grupo. Mínimo 25 segundos recomendados para evitar bloqueos de WhatsApp.',
+            side: 'top',
+            align: 'start',
+          },
+        },
+        {
+          element: '#grp-create-btn',
+          popover: {
+            title: '🚀 Crear los Grupos',
+            description: 'Cuando todo esté listo, haz clic aquí. Se mostrará el progreso en tiempo real. Al finalizar podrás descargar un Excel con los enlaces de invitación de todos los grupos creados.',
+            side: 'top',
+            align: 'center',
+          },
+        },
+        {
+          popover: {
+            title: '✅ ¡Ya sabes crear grupos!',
+            description: 'Recuerda: el overlay gris que bloquea la página mientras se crean los grupos es normal. Puedes detener el proceso en cualquier momento desde la notificación azul en la esquina inferior derecha.',
+          },
+        },
+      ] as DriveStep[],
+    });
+
+    driverObj.drive();
+  };
+
+  return { startTour, startMessageTour, startAddToGroupTour, startGroupTour };
 };

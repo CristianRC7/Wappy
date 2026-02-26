@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Play, BookOpen, Clock, ChevronRight, MessageCircle, UserPlus } from 'lucide-react';
+import { Play, BookOpen, Clock, ChevronRight, MessageCircle, UserPlus, Users } from 'lucide-react';
 import { useAppTour } from '../hooks/useAppTour';
 import Modal from '../components/Modal';
 
@@ -42,7 +42,7 @@ function TutorialCard({ tutorial, onSelect }: { tutorial: Tutorial; onSelect: (t
 
 // ─── Página Tutoriales ────────────────────────────────────────────────────────
 export default function Tutorials() {
-  const { startTour, startMessageTour, startAddToGroupTour } = useAppTour();
+  const { startTour, startMessageTour, startAddToGroupTour, startGroupTour } = useAppTour();
   const [selectedTutorial, setSelectedTutorial] = useState<Tutorial | null>(null);
 
   const tutorials: Tutorial[] = [
@@ -72,6 +72,15 @@ export default function Tutorials() {
       steps: 8,
       icon: <UserPlus size={22} className="text-blue-600" />,
       onStart: startAddToGroupTour,
+    },
+    {
+      id: 'group-tour',
+      title: 'Cómo crear grupos masivamente',
+      description: 'Aprende a crear múltiples grupos con nombres personalizados, descripción, administrador fijo y exportar los enlaces de invitación en Excel.',
+      duration: '~2 min',
+      steps: 10,
+      icon: <Users size={22} className="text-blue-600" />,
+      onStart: startGroupTour,
     },
     // Agrega más tutoriales aquí en el futuro
   ];

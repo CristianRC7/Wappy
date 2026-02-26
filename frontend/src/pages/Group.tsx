@@ -257,38 +257,48 @@ const handleCreateGroups = async () => {
 
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md relative">
+
+      {/* ── Overlay de bloqueo ────────────────────────────────────────────── */}
       {notification.loading && (
         <div className="absolute inset-0 bg-white bg-opacity-60 z-20 flex items-center justify-center cursor-not-allowed select-none">
           <span className="text-blue-700 text-lg font-semibold animate-pulse">Creando grupos...</span>
         </div>
       )}
-      <h2 className="text-2xl font-bold mb-4 text-blue-700">Subir archivo CSV</h2>
-      <div
-        className={`flex items-center gap-4 p-4 border-2 rounded-lg cursor-pointer transition-colors ${dragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300 bg-gray-100'}`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={handleFileClick}
-      >
-        <UploadCloud size={32} className="text-blue-500" />
-        <span className="text-gray-700">Arrastra y suelta un archivo CSV aquí o haz clic para seleccionar</span>
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          accept=".csv,text/csv"
-          onChange={handleInputChange}
-          disabled={notification.loading}
-        />
-      </div>
-      {fileName && (
-        <div className="flex items-center gap-2 mt-3 bg-blue-50 border border-blue-200 rounded px-3 py-2">
-          <span className="text-blue-700 font-medium truncate max-w-xs">{fileName}</span>
-          <button onClick={handleRemoveFile} className="ml-2 text-red-500 hover:text-red-700 cursor-pointer" disabled={notification.loading}>
-            <XCircle size={20} />
-          </button>
+
+      <h2 id="grp-title" className="text-2xl font-bold mb-4 text-blue-700">Crear Grupos</h2>
+
+      {/* ── Subir CSV ────────────────────────────────────────────────────── */}
+      <div id="grp-csv-upload">
+        <label className="block mb-2 font-medium text-gray-700">Subir archivo CSV</label>
+        <div
+          className={`flex items-center gap-4 p-4 border-2 rounded-lg cursor-pointer transition-colors ${dragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300 bg-gray-100'}`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={handleFileClick}
+        >
+          <UploadCloud size={32} className="text-blue-500" />
+          <span className="text-gray-700">Arrastra y suelta un archivo CSV aquí o haz clic para seleccionar</span>
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept=".csv,text/csv"
+            onChange={handleInputChange}
+            disabled={notification.loading}
+          />
         </div>
-      )}
+        {fileName && (
+          <div className="flex items-center gap-2 mt-3 bg-blue-50 border border-blue-200 rounded px-3 py-2">
+            <span className="text-blue-700 font-medium truncate max-w-xs">{fileName}</span>
+            <button onClick={handleRemoveFile} className="ml-2 text-red-500 hover:text-red-700 cursor-pointer" disabled={notification.loading}>
+              <XCircle size={20} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Etiquetas disponibles (solo cuando hay CSV) ───────────────────── */}
       {csvFields.length > 0 && (
         <div className="mt-4">
           <span className="font-semibold text-gray-700">Etiquetas disponibles: </span>
@@ -297,142 +307,143 @@ const handleCreateGroups = async () => {
           ))}
         </div>
       )}
-      {csvFields.length > 0 && (
-        <div className="mt-6">
-          <label className="block mb-2 font-medium text-gray-700">Título del grupo:</label>
-          <input
-            type="text"
-            value={groupTitle}
-            onChange={handleGroupTitleChange}
-            onFocus={() => setFocus('title')}
-            onBlur={() => setFocus(null)}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-            placeholder="Ejemplo: Grupo de @nombre - @ciudad"
-            disabled={notification.loading}
-          />
-        </div>
-      )}
+
+      {/* ── Título del grupo ─────────────────────────────────────────────── */}
+      <div id="grp-title-input" className="mt-6">
+        <label className="block mb-2 font-medium text-gray-700">Título del grupo:</label>
+        <input
+          type="text"
+          value={groupTitle}
+          onChange={handleGroupTitleChange}
+          onFocus={() => setFocus('title')}
+          onBlur={() => setFocus(null)}
+          className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          placeholder="Ejemplo: Grupo de @nombre - @ciudad"
+          disabled={notification.loading}
+        />
+      </div>
       {preview && focus === 'title' && (
         <div className="mb-4 mt-2 p-3 bg-gray-50 border border-gray-200 rounded">
           <span className="block text-gray-500 text-xs mb-1">Ejemplo de nombre de grupo:</span>
           <span className="text-gray-800 whitespace-pre-line">{preview}</span>
         </div>
       )}
-      {csvFields.length > 0 && (
-        <div className="mt-6">
-          <label className="flex items-center gap-2 mb-2 font-medium text-gray-700">
-            <input
-              type="checkbox"
-              checked={descEnabled}
-              onChange={handleDescCheck}
-              className="accent-blue-600 cursor-pointer"
-              disabled={notification.loading}
-            />
-            Descripción:
-          </label>
-          {descEnabled && (
-            <>
-              <textarea
-                value={groupDesc}
-                onChange={handleDescChange}
-                onFocus={() => setFocus('desc')}
-                onBlur={() => setFocus(null)}
-                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
-                placeholder="Ejemplo: Bienvenidos a @nombre, grupo de @ciudad"
-                rows={3}
-                disabled={notification.loading}
-              />
-              {descPreview && focus === 'desc' && (
-                <div className="mb-4 mt-2 p-3 bg-gray-50 border border-gray-200 rounded">
-                  <span className="block text-gray-500 text-xs mb-1">Ejemplo de descripción:</span>
-                  <span className="text-gray-800 whitespace-pre-line">{descPreview}</span>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
-      {csvFields.length > 0 && (
-        <div className="mt-6">
-          <label className="flex items-center gap-2 mb-2 font-medium text-gray-700">
-            <input
-              type="checkbox"
-              checked={addAdmin}
-              onChange={e => setAddAdmin(e.target.checked)}
-              className="accent-blue-600 cursor-pointer"
-              disabled={notification.loading}
-            />
-            Agregar número como administrador de todos los grupos
-          </label>
-          {addAdmin && (
-            <input
-              type="text"
-              value={adminNumber}
-              onChange={e => {
-                // Solo permitir números
-                const val = e.target.value.replace(/\D/g, '');
-                setAdminNumber(val);
-              }}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-              placeholder="Ejemplo: 59175057788"
-              maxLength={15}
-              disabled={notification.loading}
-            />
-          )}
-        </div>
-      )}
-      {csvFields.length > 0 && (
-        <div className="mt-8 mb-4">
-          <label className="block mb-2 font-medium text-gray-700">Columnas del Excel (usa etiquetas, separadas por coma):</label>
+
+      {/* ── Descripción ──────────────────────────────────────────────────── */}
+      <div id="grp-desc" className="mt-6">
+        <label className="flex items-center gap-2 mb-2 font-medium text-gray-700">
           <input
-            type="text"
-            value={columnTemplate}
-            onChange={e => setColumnTemplate(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-            placeholder="Ejemplo: @nombre, @ciudad, @telefono"
+            type="checkbox"
+            checked={descEnabled}
+            onChange={handleDescCheck}
+            className="accent-blue-600 cursor-pointer"
             disabled={notification.loading}
           />
-          <span className="text-xs text-gray-500">Solo se incluirán las columnas aquí indicadas y el enlace de invitación.</span>
-        </div>
-      )}
-      {csvFields.length > 0 && (
-        <>
-          <div className="mt-8">
-            <label className="block mb-2 font-medium text-gray-700">Tiempo de espera entre mensajes (segundos)</label>
-            <input
-              type="number"
-              min={25}
-              value={waitTime}
-              onChange={e => setWaitTime(Number(e.target.value))}
-              className="w-full mb-4 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          Descripción:
+        </label>
+        {descEnabled && (
+          <>
+            <textarea
+              value={groupDesc}
+              onChange={handleDescChange}
+              onFocus={() => setFocus('desc')}
+              onBlur={() => setFocus(null)}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+              placeholder="Ejemplo: Bienvenidos a @nombre, grupo de @ciudad"
+              rows={3}
               disabled={notification.loading}
             />
-          </div>
-          <div className="flex justify-center mt-4">
-            <button
-              className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-2xl shadow-lg hover:from-blue-700 hover:to-blue-500 transition-all duration-200 font-semibold text-lg focus:outline-none focus:ring-4 focus:ring-blue-200 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-              type="button"
-              onClick={handleCreateGroups}
-              disabled={notification.loading}
-            >
-              {notification.loading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                  </svg>
-                  Creando Grupos...
-                </>
-              ) : (
-                <>
-                  <Users size={24} />
-                  Crear Grupos
-                </>
-              )}
-            </button>
-          </div>
-        </>
-      )}
+            {descPreview && focus === 'desc' && (
+              <div className="mb-4 mt-2 p-3 bg-gray-50 border border-gray-200 rounded">
+                <span className="block text-gray-500 text-xs mb-1">Ejemplo de descripción:</span>
+                <span className="text-gray-800 whitespace-pre-line">{descPreview}</span>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* ── Agregar admin ─────────────────────────────────────────────────── */}
+      <div id="grp-admin" className="mt-6">
+        <label className="flex items-center gap-2 mb-2 font-medium text-gray-700">
+          <input
+            type="checkbox"
+            checked={addAdmin}
+            onChange={e => setAddAdmin(e.target.checked)}
+            className="accent-blue-600 cursor-pointer"
+            disabled={notification.loading}
+          />
+          Agregar número como administrador de todos los grupos
+        </label>
+        {addAdmin && (
+          <input
+            type="text"
+            value={adminNumber}
+            onChange={e => {
+              // Solo permitir números
+              const val = e.target.value.replace(/\D/g, '');
+              setAdminNumber(val);
+            }}
+            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="Ejemplo: 59175057788"
+            maxLength={15}
+            disabled={notification.loading}
+          />
+        )}
+      </div>
+
+      {/* ── Columnas del Excel ────────────────────────────────────────────── */}
+      <div id="grp-columns" className="mt-8 mb-4">
+        <label className="block mb-2 font-medium text-gray-700">Columnas del Excel (usa etiquetas, separadas por coma):</label>
+        <input
+          type="text"
+          value={columnTemplate}
+          onChange={e => setColumnTemplate(e.target.value)}
+          className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          placeholder="Ejemplo: @nombre, @ciudad, @telefono"
+          disabled={notification.loading}
+        />
+        <span className="text-xs text-gray-500">Solo se incluirán las columnas aquí indicadas y el enlace de invitación.</span>
+      </div>
+
+      {/* ── Tiempo de espera ─────────────────────────────────────────────── */}
+      <div id="grp-wait-time" className="mt-8">
+        <label className="block mb-2 font-medium text-gray-700">Tiempo de espera entre mensajes (segundos)</label>
+        <input
+          type="number"
+          min={25}
+          value={waitTime}
+          onChange={e => setWaitTime(Number(e.target.value))}
+          className="w-full mb-4 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          disabled={notification.loading}
+        />
+      </div>
+
+      {/* ── Botón crear ───────────────────────────────────────────────────── */}
+      <div id="grp-create-btn" className="flex justify-center mt-4">
+        <button
+          className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-2xl shadow-lg hover:from-blue-700 hover:to-blue-500 transition-all duration-200 font-semibold text-lg focus:outline-none focus:ring-4 focus:ring-blue-200 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+          type="button"
+          onClick={handleCreateGroups}
+          disabled={notification.loading}
+        >
+          {notification.loading ? (
+            <>
+              <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+              </svg>
+              Creando Grupos...
+            </>
+          ) : (
+            <>
+              <Users size={24} />
+              Crear Grupos
+            </>
+          )}
+        </button>
+      </div>
+
     </div>
   );
 }
