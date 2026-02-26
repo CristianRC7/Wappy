@@ -54,7 +54,7 @@ La forma más fácil de iniciar el proyecto en Windows es usando el script `inic
 
 #### 1. Clonar o descargar el proyecto
 ```bash
-git clone https://github.com/tu-usuario/wappy.git
+git clone https://github.com/CristianRC7/Wappy.git
 cd wappy
 ```
 
