@@ -8,7 +8,7 @@ echo ============================================================
 echo                            Wappy                        
 echo ============================================================
 echo.
-echo  [1] Instalar/Verificar Paquetes
+echo  [1] Instalar/Verificar Requerimientos
 echo  [2] Iniciar Servicios
 echo  [3] Apagar Servicios
 echo  [4] Salir
@@ -30,56 +30,103 @@ goto MENU
 :INSTALAR
 cls
 echo ============================================================
-echo          INSTALANDO/VERIFICANDO PAQUETES                    
+echo        INSTALANDO/VERIFICANDO REQUERIMIENTOS               
 echo ============================================================
 echo.
 
-echo [Backend] Verificando carpeta server...
+echo [1/4] Verificando carpetas del proyecto...
 if not exist "server" (
     echo [X] Error: No se encontro la carpeta 'server'
     pause
     goto MENU
 )
-
-echo [Frontend] Verificando carpeta frontend...
 if not exist "frontend" (
     echo [X] Error: No se encontro la carpeta 'frontend'
     pause
     goto MENU
 )
+echo [OK] Carpetas encontradas.
 
 echo.
 echo ===========================================================
-echo [Backend] Instalando dependencias en server...
+echo [2/4] Verificando archivo .env del Backend...
 echo ===========================================================
+if exist "server\.env" (
+    echo [OK] server\.env ya existe. No se realizaron cambios.
+) else (
+    echo [INFO] server\.env no encontrado. Creando...
+    if exist "server\.env.example" (
+        copy "server\.env.example" "server\.env" >nul
+        echo [OK] server\.env creado desde .env.example
+    ) else (
+        echo [INFO] .env.example no encontrado. Generando con valores por defecto...
+        (
+            echo # Port where the server will run
+            echo PORT=3005
+            echo # Allowed CORS origin
+            echo CORS_ORIGIN=http://localhost:5173
+        ) > "server\.env"
+        echo [OK] server\.env creado con valores por defecto.
+    )
+)
+
+echo.
+echo ===========================================================
+echo [3/4] Verificando archivo .env del Frontend...
+echo ===========================================================
+if exist "frontend\.env" (
+    echo [OK] frontend\.env ya existe. No se realizaron cambios.
+) else (
+    echo [INFO] frontend\.env no encontrado. Creando...
+    if exist "frontend\.env.example" (
+        copy "frontend\.env.example" "frontend\.env" >nul
+        echo [OK] frontend\.env creado desde .env.example
+    ) else (
+        echo [INFO] .env.example no encontrado. Generando con valores por defecto...
+        (
+            echo # Example environment variables for Vite frontend
+            echo VITE_API_URL=http://localhost:3005
+        ) > "frontend\.env"
+        echo [OK] frontend\.env creado con valores por defecto.
+    )
+)
+
+echo.
+echo ===========================================================
+echo [4/4] Instalando dependencias de Node.js...
+echo ===========================================================
+echo.
+echo --- Backend ---
 cd server
 if not exist "node_modules" (
-    echo Instalando paquetes del backend...
-    call npm install
+    echo Instalando paquetes del backend por primera vez...
 ) else (
-    echo node_modules ya existe. Verificando actualizaciones...
-    call npm install
+    echo node_modules encontrado. Verificando actualizaciones...
 )
+call npm install
 cd ..
 
 echo.
-echo ===========================================================
-echo [Frontend] Instalando dependencias en frontend...
-echo ===========================================================
+echo --- Frontend ---
 cd frontend
 if not exist "node_modules" (
-    echo Instalando paquetes del frontend...
-    call npm install
+    echo Instalando paquetes del frontend por primera vez...
 ) else (
-    echo node_modules ya existe. Verificando actualizaciones...
-    call npm install
+    echo node_modules encontrado. Verificando actualizaciones...
 )
+call npm install
 cd ..
 
 echo.
 echo ============================================================
-echo [OK] Instalacion completada exitosamente
+echo [OK] Todos los requerimientos verificados correctamente
 echo ============================================================
+echo.
+echo   - Carpetas del proyecto : OK
+echo   - server\.env           : OK
+echo   - frontend\.env         : OK
+echo   - Dependencias backend  : OK
+echo   - Dependencias frontend : OK
 echo.
 pause
 goto MENU
@@ -107,14 +154,29 @@ if not exist "frontend" (
 echo Verificando node_modules...
 if not exist "server\node_modules" (
     echo [X] Error: No se encontraron las dependencias del backend
-    echo    Ejecute primero la opcion [1] para instalar paquetes
+    echo    Ejecute primero la opcion [1] para instalar requerimientos
     pause
     goto MENU
 )
 
 if not exist "frontend\node_modules" (
     echo [X] Error: No se encontraron las dependencias del frontend
-    echo    Ejecute primero la opcion [1] para instalar paquetes
+    echo    Ejecute primero la opcion [1] para instalar requerimientos
+    pause
+    goto MENU
+)
+
+echo Verificando archivos .env...
+if not exist "server\.env" (
+    echo [X] Error: No se encontro server\.env
+    echo    Ejecute primero la opcion [1] para instalar requerimientos
+    pause
+    goto MENU
+)
+
+if not exist "frontend\.env" (
+    echo [X] Error: No se encontro frontend\.env
+    echo    Ejecute primero la opcion [1] para instalar requerimientos
     pause
     goto MENU
 )
