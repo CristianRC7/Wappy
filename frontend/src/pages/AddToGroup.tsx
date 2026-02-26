@@ -222,12 +222,12 @@ function AddToGroup() {
         </div>
       )}
 
-      <h2 className="text-2xl font-bold mb-6 text-blue-700 flex items-center gap-2">
+      <h2 id="atg-title" className="text-2xl font-bold mb-6 text-blue-700 flex items-center gap-2">
         <Users size={26} /> Agregar a Grupo
       </h2>
 
       {/* ── Selector de grupo ────────────────────────────────────────────── */}
-      <div className="mb-6">
+      <div id="atg-group-selector" className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <label className="font-medium text-gray-700">Seleccionar grupo</label>
           <button
@@ -265,7 +265,7 @@ function AddToGroup() {
       <div className="mb-4">
         <label className="block mb-2 font-medium text-gray-700">Archivo CSV</label>
 
-        <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+        <div id="atg-csv-info" className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
           <p className="font-semibold mb-1">Columnas del CSV:</p>
           <p>
             <span className="font-mono bg-blue-100 px-1 rounded">telefono</span>
@@ -278,6 +278,7 @@ function AddToGroup() {
         </div>
 
         <div
+          id="atg-csv-upload"
           className={`flex items-center gap-4 p-4 border-2 rounded-lg cursor-pointer transition-colors ${
             dragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300 bg-gray-100'
           }`}
@@ -327,7 +328,7 @@ function AddToGroup() {
       </div>
 
       {/* ── Tiempo de espera ─────────────────────────────────────────────── */}
-      <div className="mb-6">
+      <div id="atg-wait-time" className="mb-6">
         <label className="block mb-2 font-medium text-gray-700">
           Tiempo de espera entre adiciones (segundos)
         </label>
@@ -344,7 +345,7 @@ function AddToGroup() {
 
       {/* ── Botón principal ───────────────────────────────────────────────── */}
       {csvRows.length > 0 && selectedGroup && (
-        <div className="flex justify-center mt-4">
+        <div id="atg-add-btn" className="flex justify-center mt-4">
           <button
             className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-2xl shadow-lg hover:from-blue-700 hover:to-blue-500 transition-all duration-200 font-semibold text-lg focus:outline-none focus:ring-4 focus:ring-blue-200 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
             onClick={handleAddToGroup}
