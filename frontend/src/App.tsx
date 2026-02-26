@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-//import Navbar from './components/Navbar';
 import { SidebarProvider, useSidebar } from './context/SidebarContext';
 import Sidebar from './components/Sidebar';
 import Qr from './pages/Qr';
@@ -8,31 +7,37 @@ import Group from './pages/Group';
 import Chats from './pages/Chats';
 import AddToGroup from './pages/AddToGroup';
 import Troubleshooting from './pages/Troubleshooting';
+import WelcomeTourModal from './components/WelcomeTourModal';
+import Tutorials from './pages/Tutorials';
 
 function AppContent() {
   const { isExpanded } = useSidebar();
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
-      {/* Main Content - Se empuja cuando el sidebar se expande */}
-      <main 
-        className={`flex-1 transition-all duration-300 ease-in-out ${
-          isExpanded ? 'lg:ml-64' : 'lg:ml-20'
-        }`}
-      >
-        <div className="max-w-7xl mx-auto p-6">
-          <Routes>
-            <Route path="/" element={<Qr />} />
-            <Route path="/message" element={<Message />} />
-            <Route path="/group" element={<Group />} />
-            <Route path="/chats" element={<Chats />} />
-            <Route path="/add-to-group" element={<AddToGroup />} />
+    <>
+      <div className="flex min-h-screen bg-gray-50">
+        <Sidebar />
+        {/* Main Content - Se empuja cuando el sidebar se expande */}
+        <main 
+          className={`flex-1 transition-all duration-300 ease-in-out ${
+            isExpanded ? 'lg:ml-64' : 'lg:ml-20'
+          }`}
+        >
+          <div className="max-w-7xl mx-auto p-6">
+            <Routes>
+            <Route path="/"                element={<Qr />} />
+            <Route path="/message"         element={<Message />} />
+            <Route path="/group"           element={<Group />} />
+            <Route path="/add-to-group"    element={<AddToGroup />} />
+            <Route path="/chats"           element={<Chats />} />
             <Route path="/troubleshooting" element={<Troubleshooting />} />
+            <Route path="/tutorials"       element={<Tutorials />} />
           </Routes>
-        </div>
-      </main>
-    </div>
+          </div>
+        </main>
+      </div>
+      <WelcomeTourModal />
+    </>
   );
 }
 

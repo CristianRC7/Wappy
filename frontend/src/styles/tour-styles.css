@@ -1,0 +1,82 @@
+.driver-popover.driverjs-theme {
+  background-color: #ffffff;
+  color: #000;
+}
+
+.driver-popover.driverjs-theme .driver-popover-title {
+  font-size: 20px;
+}
+
+.driver-popover.driverjs-theme .driver-popover-title,
+.driver-popover.driverjs-theme .driver-popover-description,
+.driver-popover.driverjs-theme .driver-popover-progress-text {
+  color: #000;
+}
+
+/* ── Botones: base azul ──────────────────────────────────────────────────── */
+.driver-popover.driverjs-theme button {
+  flex: 1;
+  text-align: center;
+  background-color: #2563eb;
+  color: #ffffff;
+  border: 2px solid #2563eb;
+  text-shadow: none;
+  font-size: 14px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.driver-popover.driverjs-theme button:hover {
+  background-color: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #ffffff;
+}
+
+/* ── Botón "Anterior": contorno azul, fondo blanco ──────────────────────── */
+.driver-popover.driverjs-theme .driver-popover-prev-btn {
+  background-color: #ffffff;
+  color: #2563eb;
+  border: 2px solid #2563eb;
+}
+
+.driver-popover.driverjs-theme .driver-popover-prev-btn:hover {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+/* ── Botón cerrar (X): sin fondo ─────────────────────────────────────────── */
+.driver-popover.driverjs-theme .driver-popover-close-btn {
+  flex: unset;
+  background-color: transparent;
+  border: none;
+  color: #9b9b9b;
+}
+
+.driver-popover.driverjs-theme .driver-popover-close-btn:hover {
+  background-color: transparent;
+  border: none;
+  color: #000;
+}
+
+.driver-popover.driverjs-theme .driver-popover-navigation-btns {
+  justify-content: space-between;
+  gap: 3px;
+}
+
+.driver-popover.driverjs-theme .driver-popover-arrow-side-left.driver-popover-arrow {
+  border-left-color: #fde047;
+}
+
+.driver-popover.driverjs-theme .driver-popover-arrow-side-right.driver-popover-arrow {
+  border-right-color: #fde047;
+}
+
+.driver-popover.driverjs-theme .driver-popover-arrow-side-top.driver-popover-arrow {
+  border-top-color: #fde047;
+}
+
+.driver-popover.driverjs-theme .driver-popover-arrow-side-bottom.driver-popover-arrow {
+  border-bottom-color: #fde047;
+}

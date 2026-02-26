@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",
+    "driver.js": "^1.4.0",
     "lucide-react": "^0.562.0",
     "papaparse": "^5.5.3",
     "react": "^19.2.3",
@@ -71,20 +72,29 @@
       {
         "from": "dist",
         "to": "dist",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "win": {
-      "target": ["nsis"],
+      "target": [
+        "nsis"
+      ],
       "icon": "src/assets/icon.png"
     },
     "mac": {
-      "target": ["dmg"],
+      "target": [
+        "dmg"
+      ],
       "icon": "src/assets/icon.png",
       "category": "public.app-category.social-networking"
     },
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "icon": "src/assets/icon.png",
       "category": "Network"
     },
